@@ -1,0 +1,27 @@
+# Secrets et données locales (vivent dans ~/.config/barre, jamais dans le dépôt)
+config.json
+rules.json
+logs/
+data/
+# Sauvegardes de travail, journaux, caches
+backup-v1/
+*.orig
+*.bak
+.DS_Store
+__pycache__/
+node_modules/
+# Compilations (sources .c, .swift et scripts gardés)
+touch/BarreTouch.app/
+touch/tools/usbhid
+touch/tools/usbctl
+touch/tools/usbread
+touch/tools/usbpoke
+touch/tools/usbcapture
+touch/tools/usbreset
+touch/tools/winrace
+touch/tools/winreset
+touch/tools/winsequence
+touch/tools/racer
+touch/tools/cfgdesc
+# Outil tiers (pilote Touch Up), pas redistribué
+touch/touchup/

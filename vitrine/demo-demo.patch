@@ -1,0 +1,163 @@
+--- ./lib/demo.mjs	2026-10-17 16:09:17
++++ ./lib/demo.mjs	2026-10-29 01:09:34
+@@ -6,11 +6,11 @@
+ export function patrimoineDemo(now = Date.now()) {
+   const data = normaliser(squelette());
+   const set = (id, champs) => Object.assign(data.lignes.find((l) => l.id === id), champs);
+-  data.comptes[0].date_ouverture = '2022-08-12';
++  data.comptes[0].date_ouverture = '2021-03-09';
+   delete data.comptes[0]._a_remplir;
+   set('pea-psp5', { quantite: 1000, pru: 38.2 });
+   set('pea-wpea', { quantite: 2400, pru: 5.42 });
+-  set('pea-ai-nominatif', { quantite: 21, pru: 151.3, date_inscription_nominatif: '2023-03-15' });
++  set('pea-ai-nominatif', { quantite: 14, pru: 133.2, date_inscription_nominatif: '2023-06-12' });
+   set('pea-ai-swing', { quantite: 33, pru: 168.9 });
+   set('pea-tte', { quantite: 120, pru: 58.1 });
+   set('ibkr-igln', { quantite: 60, pru: 61.4 });
+@@ -20,23 +20,23 @@
+   data.cible = { 'Actions US': 35, Monde: 20, 'Actions Europe': 20, 'Défense': 10, Or: 10, Cash: 5 };
+   const div = (date, ligne, symbole, montant) => ({ id: `op-demo-${date}`, date, compte: 'pea', sens: 'dividende', symbole, ligne, montant, devise: 'EUR' });
+   data.operations = [
+-    div('2026-01-05', 'pea-tte', 'TTE.PA', 101.4),
+-    div('2026-04-01', 'pea-tte', 'TTE.PA', 102),
+-    div('2026-05-20', 'pea-ai-swing', 'AI.PA', 108.9),
+-    div('2026-05-20', 'pea-ai-nominatif', 'AI.PA', 76.23),
+-    div('2026-07-01', 'pea-tte', 'TTE.PA', 102),
+-    div('2026-10-01', 'pea-tte', 'TTE.PA', 102)
++    div('2026-01-05', 'pea-tte', 'DDD.PA', 101.4),
++    div('2026-04-01', 'pea-tte', 'DDD.PA', 102),
++    div('2026-05-20', 'pea-ai-swing', 'CCC.PA', 108.9),
++    div('2026-05-20', 'pea-ai-nominatif', 'CCC.PA', 76.23),
++    div('2026-07-01', 'pea-tte', 'DDD.PA', 102),
++    div('2026-10-01', 'pea-tte', 'DDD.PA', 102)
+   ];
+   const heure = now - 25 * 60000;
+   const q = (symbole, prix, veille, devise, h = heure) => [symbole, { symbole, prix, veille, devise, heure: h, recupere_le: now }];
+   const cours = Object.fromEntries([
+-    q('PSP5.PA', 47.86, 47.52, 'EUR'),
+-    q('WPEA.PA', 5.94, 5.92, 'EUR'),
+-    q('AI.PA', 172.36, 169.8, 'EUR'),
+-    q('TTE.PA', 56.42, 56.95, 'EUR'),
+-    q('IGLN.L', 78.12, 77.4, 'USD'),
++    q('AAA.PA', 47.86, 47.52, 'EUR'),
++    q('BBB.PA', 5.94, 5.92, 'EUR'),
++    q('CCC.PA', 172.36, 169.8, 'EUR'),
++    q('DDD.PA', 56.42, 56.95, 'EUR'),
++    q('EEE.L', 78.12, 77.4, 'USD'),
+     // cours ancien : la dernière lecture date de 5 jours
+-    ['GDX.L', { symbole: 'GDX.L', prix: 71.8, veille: 70.9, devise: 'USD', heure: now - 5 * 86400000, recupere_le: now - 5 * 86400000, echec: 'délai dépassé' }],
++    ['FFF.L', { symbole: 'FFF.L', prix: 71.8, veille: 70.9, devise: 'USD', heure: now - 5 * 86400000, recupere_le: now - 5 * 86400000, echec: 'délai dépassé' }],
+     q('EURUSD=X', 1.162, 1.158, 'USD')
+   ]);
+   return { data, cours };
+@@ -49,7 +49,7 @@
+   const ev = (title, start, minutes = 60, extra = {}) => ({ title, location: '', start, end: start + minutes * 60000, allDay: false, calendar: 'Perso', ...extra });
+ 
+   let position = 74;
+-  const music = () => ({ ok: true, running: true, state: 'playing', volume: 60, id: 'demo1', title: 'Night Drive', artist: 'Les Ondes', album: 'Périphérique', duration: 236, position });
++  const music = () => ({ ok: true, running: true, state: globalThis.__demoPlaying === false ? 'paused' : 'playing', volume: 60, id: 'demo1', title: 'Morceau d’exemple', artist: 'Artiste d’exemple', album: 'Périphérique', duration: 236, position });
+ 
+   setState({
+     system: {
+@@ -58,10 +58,10 @@
+       disk: { used: 443e9, total: 494e9 },
+       docker: { running: 10, total: 11 },
+       containers: [
+-        ['plex', 'running', 'Up 3 days'], ['sonarr', 'running', 'Up 3 days'], ['radarr', 'running', 'Up 3 days'],
+-        ['prowlarr', 'running', 'Up 3 days'], ['qbittorrent', 'running', 'Up 3 days'], ['overseerr', 'running', 'Up 3 days'],
+-        ['bazarr', 'running', 'Up 3 days'], ['flaresolverr', 'running', 'Up 3 days'], ['homepage', 'running', 'Up 2 days'],
+-        ['hermes', 'running', 'Up 5 hours'], ['tautulli', 'exited', 'Exited (0) 2 days ago']
++        ['web', 'running', 'Up 3 days'], ['db', 'running', 'Up 3 days'], ['sauvegarde', 'running', 'Up 3 days'],
++        ['dns', 'running', 'Up 3 days'], ['photos', 'running', 'Up 3 days'], ['notes', 'running', 'Up 3 days'],
++        ['proxy', 'running', 'Up 3 days'], ['cache', 'running', 'Up 3 days'], ['relais', 'running', 'Up 2 days'],
++        ['agent', 'running', 'Up 5 hours'], ['metrics', 'exited', 'Exited (0) 2 days ago']
+       ].map(([name, state, status]) => ({ name, state, status })),
+       updatedAt: now
+     },
+@@ -69,36 +69,36 @@
+     reminders: {
+       ok: true,
+       items: [
+-        { id: 'r1', title: 'Relancer le recruteur Capgemini', list: 'Boulot', due: day(-1, 18), priority: 1, overdue: true },
+-        { id: 'r2', title: 'Envoyer la candidature Decathlon', list: 'Boulot', due: day(0, 12), priority: 0, overdue: false },
+-        { id: 'r3', title: 'Changer les plaquettes du vélo', list: 'Perso', due: day(2, 9), priority: 0, overdue: false },
+-        { id: 'r4', title: 'Prendre rendez-vous kiné', list: 'Perso', due: null, priority: 0, overdue: false },
+-        { id: 'r5', title: 'Payer la facture Free', list: 'Perso', due: day(4, 9), priority: 0, overdue: false }
++        { id: 'r1', title: 'Répondre au devis de l’électricien', list: 'Travail', due: day(-1, 18), priority: 1, overdue: true },
++        { id: 'r2', title: 'Envoyer le dossier à l’assurance', list: 'Travail', due: day(0, 12), priority: 0, overdue: false },
++        { id: 'r3', title: 'Changer l’ampoule du couloir', list: 'Perso', due: day(2, 9), priority: 0, overdue: false },
++        { id: 'r4', title: 'Prendre rendez-vous chez le dentiste', list: 'Perso', due: null, priority: 0, overdue: false },
++        { id: 'r5', title: 'Payer la facture d’eau', list: 'Perso', due: day(4, 9), priority: 0, overdue: false }
+       ]
+     },
+     calendar: {
+       ok: true,
+       events: [
+-        ev('Footing Z2 · 45 min', day(0, 8, 30), 45),
+-        ev('Point avec Thomas', day(0, 11), 30, { location: 'Visio' }),
+-        ev('Déjeuner papa', day(0, 13), 90),
+-        ev('Fractionné 6×800', day(1, 18, 30), 60),
+-        { title: 'Anniversaire Léa', location: '', start: allDay(2), end: allDay(3), allDay: true, calendar: 'Perso' },
+-        ev('Entretien Decathlon', day(2, 10), 60),
+-        ev('Home trainer sweet spot', day(3, 19), 75),
+-        ev('Sortie longue 16 km', day(5, 9), 100),
+-        ev('Vélo · sortie club', day(6, 8), 180),
+-        ev('Ciné', day(6, 20, 30), 150)
++        ev('Footing · 45 min', day(0, 8, 30), 45),
++        ev('Point d’équipe', day(0, 11), 30, { location: 'Visio' }),
++        ev('Déjeuner en famille', day(0, 13), 90),
++        ev('Fractionné court', day(1, 18, 30), 60),
++        { title: 'Anniversaire d’un ami', location: '', start: allDay(2), end: allDay(3), allDay: true, calendar: 'Perso' },
++        ev('Rendez-vous banque', day(2, 10), 60),
++        ev('Séance de vélo en salle', day(3, 19), 75),
++        ev('Sortie longue', day(5, 9), 100),
++        ev('Sortie vélo du dimanche', day(6, 8), 180),
++        ev('Cinéma', day(6, 20, 30), 150)
+       ]
+     },
+     plex: {
+       ok: true,
+-      sessions: [{ title: 'Severance · Hello, Ms. Cobel', user: 'julian', state: 'playing', progress: 42 }],
++      sessions: [{ title: 'Film d’exemple', user: 'invité', state: 'playing', progress: 42 }],
+       recent: [
+-        { title: 'Dune : Deuxième partie', type: 'movie', addedAt: now - 3 * 3600e3 },
+-        { title: 'The Bear · Saison 3', type: 'season', addedAt: now - 26 * 3600e3 },
+-        { title: 'Shogun · Saison 1', type: 'season', addedAt: now - 50 * 3600e3 },
+-        { title: 'Le Comte de Monte-Cristo', type: 'movie', addedAt: now - 72 * 3600e3 }
++        { title: 'Film d’exemple A', type: 'movie', addedAt: now - 3 * 3600e3 },
++        { title: 'Série d’exemple B · Saison 2', type: 'season', addedAt: now - 26 * 3600e3 },
++        { title: 'Série d’exemple C · Saison 1', type: 'season', addedAt: now - 50 * 3600e3 },
++        { title: 'Film d’exemple D', type: 'movie', addedAt: now - 72 * 3600e3 }
+       ]
+     },
+     hue: {
+@@ -115,9 +115,9 @@
+       date: (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })(),
+       generatedAt: day(0, 7),
+       items: [
+-        { text: 'Relancer le recruteur Capgemini avant midi', done: true },
+-        { text: 'Finaliser et envoyer la candidature Decathlon', done: false },
+-        { text: 'Footing Z2 45 min, garder le cardio bas', done: false }
++        { text: 'Répondre au devis de l’électricien avant midi', done: true },
++        { text: 'Finaliser et envoyer le dossier d’assurance', done: false },
++        { text: 'Footing 45 min, allure facile', done: false }
+       ]
+     },
+     sessions: [
+@@ -127,13 +127,14 @@
+     ],
+     patrimoine: patrimoineDemo(now)
+   });
+-  pushFeed('Brief prêt : 3 mails importants, 1 entretien demain', 'hermes');
++  pushFeed('Brief prêt : 3 messages importants, 1 rendez-vous demain', 'hermes');
+   pushFeed('Autorisé · homelab · docker compose up -d', 'claude');
+   pushFeed('Priorités du jour prêtes (auto)', 'claude');
+   broadcast(true);
+ 
++  globalThis.__demoRefresh = () => { setState({ music: music() }); broadcast(); };
+   setInterval(() => {
+-    position = (position + 3) % 236;
++    if (globalThis.__demoPlaying !== false) position = (position + 3) % 236;
+     setState({ music: music() });
+     broadcast();
+   }, 3000);

@@ -1,0 +1,16 @@
+{
+    "bid": 71.775,
+    "ask": 72.055,
+    "bidsize": 600,
+    "asksize": 600,
+    "delta": -0.18,
+    "stueck": 20551,
+    "umsatz": 1481825,
+    "avg": 72.1048,
+    "executions": 547,
+    "last": 72.05,
+    "high": 72.33,
+    "low": 71.56,
+    "indication": 1,
+    "close": 72.18
+}

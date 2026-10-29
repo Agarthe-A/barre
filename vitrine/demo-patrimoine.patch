@@ -1,0 +1,65 @@
+--- ./lib/patrimoine.mjs	2026-10-17 16:09:17
++++ ./lib/patrimoine.mjs	2026-10-29 01:09:34
+@@ -79,28 +79,28 @@
+     ],
+     version: 1,
+     comptes: [
+-      { id: 'pea', nom: 'PEA Crédit Agricole', type: 'PEA', date_ouverture: '2022-08-01', _a_remplir: 'jour exact d\'ouverture à vérifier (août 2022)' },
+-      { id: 'ibkr', nom: 'CTO Interactive Brokers', type: 'CTO', date_ouverture: null },
+-      { id: 'revolut', nom: 'Revolut', type: 'cash', date_ouverture: null }
++      { id: 'pea', nom: 'Compte A', type: 'PEA', date_ouverture: '2021-03-09', _a_remplir: 'jour exact d\'ouverture à vérifier (août 2022)' },
++      { id: 'ibkr', nom: 'Compte B', type: 'CTO', date_ouverture: null },
++      { id: 'revolut', nom: 'Compte C', type: 'cash', date_ouverture: null }
+     ],
+     lignes: [
+-      { id: 'pea-psp5', compte: 'pea', nom: 'Amundi PEA S&P 500', symbole: 'PSP5.PA', isin: 'FR0011871128', quantite: 0, pru: null, devise: 'EUR', categorie: 'Actions US', _a_remplir: 'quantité et PRU' },
+-      { id: 'pea-wpea', compte: 'pea', nom: 'iShares MSCI World PEA', symbole: 'WPEA.PA', isin: 'IE0002XZSHO1', quantite: 0, pru: null, devise: 'EUR', categorie: 'Monde', _a_remplir: 'quantité et PRU' },
+-      { id: 'pea-ai-nominatif', compte: 'pea', nom: 'Air Liquide', symbole: 'AI.PA', isin: 'FR0000120073', quantite: 0, pru: null, devise: 'EUR', categorie: 'Actions Europe', sous_tranche: 'nominatif', prime_fidelite: true, date_inscription_nominatif: null, _a_remplir: 'quantité, PRU et date d\'inscription au nominatif' },
+-      { id: 'pea-ai-swing', compte: 'pea', nom: 'Air Liquide', symbole: 'AI.PA', isin: 'FR0000120073', quantite: 0, pru: null, devise: 'EUR', categorie: 'Actions Europe', sous_tranche: 'swing', defaut: true, _a_remplir: 'quantité et PRU' },
+-      { id: 'pea-tte', compte: 'pea', nom: 'TotalEnergies', symbole: 'TTE.PA', isin: 'FR0000120271', quantite: 0, pru: null, devise: 'EUR', categorie: 'Actions Europe', _a_remplir: 'quantité et PRU' },
+-      { id: 'ibkr-igln', compte: 'ibkr', nom: 'iShares Physical Gold', symbole: 'IGLN.L', isin: 'IE00B4ND3602', quantite: 0, pru: null, devise: 'USD', categorie: 'Or', _a_remplir: 'quantité et PRU (en dollars)' },
+-      { id: 'ibkr-gdx', compte: 'ibkr', nom: 'VanEck Gold Miners', symbole: 'GDX.L', isin: 'IE00BQQP9F84', quantite: 0, pru: null, devise: 'USD', categorie: 'Or', _a_remplir: 'quantité, PRU (en dollars) ; symbole Yahoo à vérifier' }
++      { id: 'pea-psp5', compte: 'pea', nom: 'Fonds actions US', symbole: 'AAA.PA', isin: 'FR0000000001', quantite: 0, pru: null, devise: 'EUR', categorie: 'Actions US', _a_remplir: 'quantité et PRU' },
++      { id: 'pea-wpea', compte: 'pea', nom: 'Fonds monde', symbole: 'BBB.PA', isin: 'IE0000000002', quantite: 0, pru: null, devise: 'EUR', categorie: 'Monde', _a_remplir: 'quantité et PRU' },
++      { id: 'pea-ai-nominatif', compte: 'pea', nom: 'Société A', symbole: 'CCC.PA', isin: 'FR0000000003', quantite: 0, pru: null, devise: 'EUR', categorie: 'Actions Europe', sous_tranche: 'nominatif', prime_fidelite: true, date_inscription_nominatif: null, _a_remplir: 'quantité, PRU et date d\'inscription au nominatif' },
++      { id: 'pea-ai-swing', compte: 'pea', nom: 'Société A', symbole: 'CCC.PA', isin: 'FR0000000003', quantite: 0, pru: null, devise: 'EUR', categorie: 'Actions Europe', sous_tranche: 'swing', defaut: true, _a_remplir: 'quantité et PRU' },
++      { id: 'pea-tte', compte: 'pea', nom: 'Société B', symbole: 'DDD.PA', isin: 'FR0000000004', quantite: 0, pru: null, devise: 'EUR', categorie: 'Actions Europe', _a_remplir: 'quantité et PRU' },
++      { id: 'ibkr-igln', compte: 'ibkr', nom: 'Fonds or', symbole: 'EEE.L', isin: 'IE0000000005', quantite: 0, pru: null, devise: 'USD', categorie: 'Or', _a_remplir: 'quantité et PRU (en dollars)' },
++      { id: 'ibkr-gdx', compte: 'ibkr', nom: 'Fonds mines d’or', symbole: 'FFF.L', isin: 'IE0000000006', quantite: 0, pru: null, devise: 'USD', categorie: 'Or', _a_remplir: 'quantité, PRU (en dollars) ; symbole Yahoo à vérifier' }
+     ],
+     liquidites: { pea: { EUR: 0 }, ibkr: { EUR: 0, USD: 0 }, revolut: { EUR: 0 } },
+     cible: {},
+     alias: {
+-      'air liquide': 'AI.PA', airliquide: 'AI.PA', 'l\'air liquide': 'AI.PA',
+-      total: 'TTE.PA', totalenergies: 'TTE.PA', 'total energies': 'TTE.PA',
+-      or: 'IGLN.L', 'or physique': 'IGLN.L', gold: 'IGLN.L', 'etc or': 'IGLN.L',
+-      's&p 500': 'PSP5.PA', 's&p': 'PSP5.PA', 'sp500': 'PSP5.PA', 'sp 500': 'PSP5.PA', 'etf s&p 500': 'PSP5.PA',
+-      'msci world': 'WPEA.PA', world: 'WPEA.PA', 'etf world': 'WPEA.PA',
+-      'mines d\'or': 'GDX.L', miners: 'GDX.L', 'gold miners': 'GDX.L', vaneck: 'GDX.L'
++      'air liquide': 'CCC.PA', airliquide: 'CCC.PA', 'l\'air liquide': 'CCC.PA',
++      total: 'DDD.PA', totalenergies: 'DDD.PA', 'total energies': 'DDD.PA',
++      or: 'EEE.L', 'or physique': 'EEE.L', gold: 'EEE.L', 'etc or': 'EEE.L',
++      's&p 500': 'AAA.PA', 's&p': 'AAA.PA', 'sp500': 'AAA.PA', 'sp 500': 'AAA.PA', 'etf s&p 500': 'AAA.PA',
++      'msci world': 'BBB.PA', world: 'BBB.PA', 'etf world': 'BBB.PA',
++      'mines d\'or': 'FFF.L', miners: 'FFF.L', 'gold miners': 'FFF.L', vaneck: 'FFF.L'
+     },
+     operations: []
+   };
+@@ -450,7 +450,7 @@
+   const compte = body.compte == null ? null : resoudreCompte(data, texte(body.compte, 'compte', { max: 40 }));
+   const tranche = body.tranche == null ? null : texte(body.tranche, 'tranche', { max: 20, motif: MOTIF_TRANCHE });
+   const symbole = body.symbole == null ? null : texte(body.symbole, 'symbole', { max: 20 }).toUpperCase();
+-  if (symbole && !MOTIF_SYMBOLE.test(symbole)) throw erreur('symbole : symbole Yahoo attendu (ex. AI.PA, IGLN.L)');
++  if (symbole && !MOTIF_SYMBOLE.test(symbole)) throw erreur('symbole : symbole Yahoo attendu (ex. CCC.PA, EEE.L)');
+   if (body.titre == null && !symbole) throw erreur('titre ou symbole manquant');
+   let ligne = body.titre != null
+     ? resoudreLigne(data, texte(body.titre, 'titre', { max: 60 }), { compte, tranche, defaut: false })
+@@ -491,7 +491,7 @@
+     if (body.isin === null) ligne.isin = null;
+     else {
+       const isin = texte(body.isin, 'ISIN', { max: 12 }).toUpperCase();
+-      if (!MOTIF_ISIN.test(isin)) throw erreur('ISIN : 12 caractères attendus (ex. FR0000120073)');
++      if (!MOTIF_ISIN.test(isin)) throw erreur('ISIN : 12 caractères attendus (ex. FR0000000003)');
+       ligne.isin = isin;
+     }
+   }

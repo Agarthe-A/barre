@@ -1,0 +1,66 @@
+--- ./server.mjs	2026-10-28 21:50:47
++++ ./server.mjs	2026-10-29 01:09:34
+@@ -57,10 +57,10 @@
+   // ne repasse à la question habituelle dans le terminal.
+   permissionTimeoutSec: 90,
+   countdowns: [
+-    { label: 'SEMI', date: '2026-12-27' },
+-    { label: '250 KM', date: '2026-12-11' }
++    { label: 'COURSE', date: '2027-01-17' },
++    { label: 'SORTIE', date: '2027-01-03' }
+   ],
+-  plan: { label: 'Plan semi', start: '2026-09-15', end: '2026-12-27' },
++  plan: { label: 'Plan course', start: '2026-10-04', end: '2027-01-17' },
+   // Mots qui signalent une séance d'entraînement dans l'agenda
+   trainingKeywords: ['course', 'run', 'sortie', 'semi', 'fractionn', 'footing', 'vélo', 'velo', 'home trainer', 'home-trainer', 'z2', 'sweet spot', 'séance', 'seance', 'muscu', 'piscine'],
+   // Agendas iCal : pour Google Agenda, Paramètres de l'agenda › « Adresse secrète au format iCal »
+@@ -738,6 +738,23 @@
+ }
+ 
+ function hermesPublic() {
++  if (DEMO) {
++    const t0 = Date.now();
++    const T = (id, titre, statut, col, extra = {}) => ({ id, titre, corps: titre, statut, col, par: 'barre', creee: t0 - 3600e3, debut: null, fin: null, resume: null, raison: null, erreur: null, ...extra });
++    return {
++      ok: true, pause: false,
++      passerelle: { etat: 'running', vivante: true, agents: 1, version: null, plateformes: [{ nom: 'discord', ok: true, etat: 'connected' }] },
++      taches: [
++        T('t_demo05', 'Résumer les messages non lus', 'running', 'encours', { debut: t0 - 4 * 60e3 }),
++        T('t_demo04', 'Préparer la liste de courses de la semaine', 'ready', 'afaire'),
++        T('t_demo03', 'Ranger le dossier Téléchargements', 'ready', 'afaire'),
++        T('t_demo02', 'Vérifier les mises à jour du Mac', 'blocked', 'bloque', { debut: t0 - 50 * 60e3, fin: t0 - 40 * 60e3, raison: 'Besoin de ton accord pour redémarrer.' }),
++        T('t_demo01', 'Brief du matin', 'done', 'fait', { debut: t0 - 5 * 3600e3, fin: t0 - 5 * 3600e3 + 90e3, resume: 'Agenda du jour, météo et rappels résumés.' })
++      ],
++      maj: t0,
++      modeles: [{ label: 'Brief du jour', texte: 'Brief du jour' }, { label: 'Point serveur', texte: 'Point serveur' }]
++    };
++  }
+   if (!config.hermes?.enabled) return { ok: false, error: 'désactivé' };
+   return { ...hermes.etat(), modeles: (config.hermes.modeles || []).map((m) => ({ label: m.label, texte: m.texte })) };
+ }
+@@ -983,6 +1000,25 @@
+   // (pas d'un autre site du tailnet qui partagerait le cookie).
+   if (req.method !== 'GET' && via !== 'bearer' && !sameOrigin(req)) {
+     return json(res, 403, { error: 'origine refusée' });
++  }
++
++  // COPIE DE DÉMO (vitrine): aucune action ne sort de la copie (ni musique, ni Hue, ni Rappels, ni commandes).
++  if (DEMO && req.method === 'POST') {
++    const p = url.pathname;
++    let m2;
++    if ((m2 = p.match(/^\/api\/music\/(playpause)$/))) {
++      globalThis.__demoPlaying = globalThis.__demoPlaying === false;
++      globalThis.__demoRefresh && globalThis.__demoRefresh();
++      return json(res, 200, { ok: true });
++    }
++    if ((m2 = p.match(/^\/api\/hue\/([\w-]+)$/))) {
++      const body = await readBody(req);
++      const room = (hue.rooms || []).find((r) => r.id === m2[1]);
++      if (room) { room.on = !!body.on; room.brightness = body.on ? 80 : 0; }
++      broadcast();
++      return json(res, 200, { ok: true });
++    }
++    if (!/^\/api\/priorities\/\d+\/toggle$/.test(p) && p !== '/api/feed') return json(res, 200, { ok: true, demo: true });
+   }
+ 
+   try {

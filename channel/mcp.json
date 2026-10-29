@@ -1,0 +1,5 @@
+{
+  "mcpServers": {
+    "barre": { "command": "/opt/homebrew/bin/node", "args": ["/Users/<toi>/barre/channel/barre-channel.mjs"] }
+  }
+}

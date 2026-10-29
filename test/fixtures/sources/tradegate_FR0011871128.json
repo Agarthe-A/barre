@@ -1,0 +1,17 @@
+{
+    "bid": 59.74,
+    "ask": 59.97,
+    "bidsize": 180,
+    "asksize": 180,
+    "delta": -0.46,
+    "stueck": 64,
+    "umsatz": 3876,
+    "avg": 60.5691,
+    "executions": 13,
+    "last": 60.45,
+    "high": 60.78,
+    "low": 60.45,
+    "indication": 1,
+    "close": 60.73,
+    "terms_and_conditions": "https://www.tradegatebsx.com/nutzungsbedingung.php"
+}
