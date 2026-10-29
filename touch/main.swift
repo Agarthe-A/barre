@@ -163,6 +163,7 @@ final class App: NSObject, NSApplicationDelegate, WKNavigationDelegate {
   var mosaicMode = false        // flux Discord sur la barre (mosaic.swift) : même principe que le mode jeu
   var mosaicArea: CGRect?       // zone des flux, en points (origine en haut à gauche)
   var mosaic: DiscordMosaic!
+  var plexWindow: PlexWindow!
   var lastCaptureCheck = Date()
   var downAt = Date()
   var swallow = false           // contact posé sur l'image du jeu : non transmis à la page
@@ -180,6 +181,7 @@ final class App: NSObject, NSApplicationDelegate, WKNavigationDelegate {
       if othersRunning() { log("déjà lancée ailleurs : arrêt"); exit(0) }
     }
     mosaic = DiscordMosaic(app: self)
+    plexWindow = PlexWindow(app: self)
     buildWindow()
     placeWindow()
     NotificationCenter.default.addObserver(self, selector: #selector(screensChanged),

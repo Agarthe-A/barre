@@ -10,7 +10,7 @@ DIR="$(cd "$(dirname "$0")" && pwd)"
 APP="$DIR/BarreTouch.app"
 mkdir -p "$APP/Contents/MacOS"
 cp "$DIR/Info.plist" "$APP/Contents/Info.plist"
-swiftc -O "$DIR/main.swift" "$DIR/relay.swift" "$DIR/window.swift" "$DIR/mosaic.swift" "$DIR/discordax.swift" -o "$APP/Contents/MacOS/BarreTouch"
+swiftc -O "$DIR/main.swift" "$DIR/relay.swift" "$DIR/window.swift" "$DIR/mosaic.swift" "$DIR/discordax.swift" "$DIR/plexwindow.swift" -o "$APP/Contents/MacOS/BarreTouch"
 ID="$(security find-identity -v -p codesigning 2>/dev/null | awk '/Apple Development/ {print $2; exit}')"
 if [ -n "$ID" ] && codesign --force --sign "$ID" --identifier com.barre.touch "$APP" 2>/dev/null; then
   echo "Signé avec le certificat Apple Development"

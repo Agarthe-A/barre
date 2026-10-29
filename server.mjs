@@ -234,7 +234,16 @@ const discordRpc = config.discord?.enabled === false ? null : creerDiscordRpc({
 });
 const dc = creerDiscord({ token: config.token, rpc: discordRpc });
 // Page Plex : Reprendre et nouveautés, lecture sur la barre (relais HLS et images vers Plex, jeton côté serveur).
-const px = creerPlex({ cfg: config.plex || {}, log: (m) => console.log('[barre]', m) });
+const px = creerPlex({
+  cfg: config.plex || {}, log: (m) => console.log('[barre]', m), publicBase: `http://127.0.0.1:${config.port}`,
+  // Relais BarreTouch (fenêtre vidéo du grand écran), même jeton que le reste
+  relay: async (body) => {
+    try {
+      const r = await fetch('http://127.0.0.1:4748/window', { method: 'POST', headers: { authorization: `Bearer ${config.token}` }, body: JSON.stringify(body), signal: AbortSignal.timeout(15000) });
+      return await r.json();
+    } catch { return { ok: false, error: 'barretouch' }; }
+  }
+});
 let plexPage = { ok: false, error: 'chargement', onDeck: [], recent: [] };
 let hermesStatuts = null; // id → statut au passage précédent (pour annoncer les tâches finies)
 const coursService = creerServiceCours({
@@ -1298,12 +1307,13 @@ const server = http.createServer(async (req, res) => {
       return res.end(Buffer.from(await r.arrayBuffer()));
     }
     if (req.method === 'GET' && p === '/api/plex/episodes') return json(res, 200, await px.episodes(String(url.searchParams.get('key') || '')));
-    if (req.method === 'POST' && (m = p.match(/^\/api\/plex\/(play|select|timeline|refresh)$/))) {
+    if (req.method === 'POST' && (m = p.match(/^\/api\/plex\/(play|select|main|timeline|refresh)$/))) {
       if (config.plex?.enabled === false) return json(res, 404, { error: 'Plex désactivé' });
       const body = await readBody(req);
       let r;
       if (m[1] === 'play') r = await px.play(String(body.key || ''), Number(body.offset) || 0);
       else if (m[1] === 'select') r = await px.select(String(body.key || ''), body);
+      else if (m[1] === 'main') r = await px.mainScreen(body);
       else if (m[1] === 'timeline') r = await px.timeline(body);
       else { await refreshPlexPage(); r = { ok: true }; }
       if (m[1] !== 'refresh') broadcast(true);

@@ -287,5 +287,17 @@ diffusée en flux). `POST /api/plex/play` (`{"key", "offset"}` → `src`, `sessi
 "recentSections": [12, 13, 14] }` (sections des nouveautés), `"enabled": false` masque la page.
 Changer de position (−15 s, +30 s) relance une session HLS au nouveau décalage.
 
+Lecteur à deux colonnes de 320 px autour de la vidéo (1280×720) : à gauche l'épisode en cours puis la
+saison (un appui lance un épisode, le suivant s'enchaîne à la fin, bouton « Suivant »), ou le résumé pour
+un film ; à droite les commandes, puis **Audio** et **Sous-titres** (toutes les pistes du fichier ;
+un choix est mémorisé par Plex pour ce média via `PUT /library/parts/<id>`, la session HLS repart au
+même endroit, sous-titre incrusté par le transcodeur). **Grand écran** : BarreTouch ouvre une fenêtre
+vidéo native (AVPlayer, `touch/plexwindow.swift`, relais `{"action":"plex","op":…}`) en plein écran
+sur l'écran principal avec une session HLS à part ; la barre devient la télécommande (pause, position,
+son, pistes, saison) et **Renvoyer sur la barre** referme la fenêtre pour reprendre ici au même
+endroit ; Échap ou un double clic sur le grand écran font pareil. `POST /api/plex/main`
+(`{"op": "open"|"status"|"play"|"pause"|"seek"|"volume"|"close", …}`), `GET /api/plex/episodes?key=`,
+`POST /api/plex/select` (`{"key", "audio"|"subtitle": <id>, 0 = aucun}`).
+
 ## Vitrine (2026-10-29)
 Page de présentation du hub: `~/clawd/projects/hub/vitrines/barre/`. Outils pour la refaire: `vitrine/` (`./vitrine/refaire.sh` lance une copie du tableau de bord en `BARRE_DEMO=1` sur le port 4799 avec une config jetable, jamais le vrai service ni `~/.config/barre`). Détails et état dans `projects/hub.md` (section « Vitrine barre »).

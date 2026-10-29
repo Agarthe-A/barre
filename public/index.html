@@ -570,6 +570,15 @@
   html.plexing #stage { visibility: hidden; }
   html.plexing #plexLive { display: block; }
   #pxVideo { position: absolute; left: 320px; top: 0; width: 1280px; height: 720px; object-fit: contain; background: #000; }
+  #pxCenter { display: none; position: absolute; left: 320px; top: 0; width: 1280px; height: 720px; overflow: hidden; background: #000; }
+  html.pxmain #pxVideo { display: none; }
+  html.pxmain #pxCenter { display: block; }
+  #pxCenter .art { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0.35; filter: blur(2px); }
+  #pxCenter .in { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; padding: 40px; }
+  #pxCenter .big { font-size: 44px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; text-shadow: 0 2px 12px rgba(0,0,0,0.7); }
+  #pxCenter .where { font-family: var(--mono); font-size: 18px; color: #E5A00D; letter-spacing: 0.1em; text-transform: uppercase; }
+  #pxCenter .tm { font-family: var(--mono); font-size: 28px; color: var(--text-2); }
+  #pxCenter .hint { font-size: 16px; color: var(--muted); }
   #plexLive .sg-side { width: 320px; padding: 18px 16px; gap: 12px; background: #000; }
   .px-now { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 12px; align-items: start; flex: none; }
   .px-poster { width: 84px; height: 126px; border-radius: 8px; object-fit: cover; display: block; background: var(--tile); }
@@ -862,6 +871,7 @@
 </div>
 <div id="plexLive">
   <video id="pxVideo" playsinline preload="auto"></video>
+  <div id="pxCenter"></div>
   <aside class="sg-side sg-l" id="pxL"></aside>
   <aside class="sg-side sg-r" id="pxR"></aside>
 </div>
@@ -2202,6 +2212,8 @@
   // -- Plex : Reprendre et nouveautés ; la lecture se fait dans la page (HLS de Plex lu par WebKit)
   let pxPlay = null;        // { key, item, session, offset (s), duration (ms), tracks, eps } pendant une lecture
   let pxPickWait = false;   // changement de piste en cours
+  let pxMain = null;        // lecture sur le grand écran : { time (s), paused, duration, volume, ready } (état relayé par BarreTouch)
+  let pxMainBusy = false;
   let pxVol = 0.8;
   let pxTl = 0, pxBusy = false;
   const pxVideo = $('pxVideo');
@@ -2211,6 +2223,8 @@
   const PX_ICON = {
     play: ICON.play, pause: ICON.pause,
     next: ICON.next,
+    screen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="12.5" rx="2"/><path d="M8.5 20.5h7M12 16.5v4"/></svg>',
+    bar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="8" width="19" height="8" rx="2"/><path d="M12 4v4M9 4h6"/></svg>',
     back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4.5A8 8 0 1 1 4.6 9"/><path d="M4 4v5h5"/></svg>',
     fwd: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4.5A8 8 0 1 0 19.4 9"/><path d="M20 4v5h-5"/></svg>',
     vol: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M17.8 6.5a7.5 7.5 0 0 1 0 11"/></svg>',
@@ -2246,24 +2260,32 @@
     });
   }
   // Position absolue dans le film : la liste HLS de Plex porte le décalage (EXT-X-START), currentTime est déjà absolu
-  const pxAbs = () => pxPlay ? pxVideo.currentTime * 1000 : 0;
+  const pxAbs = () => pxPlay ? ((pxPlay.main && pxMain) ? pxMain.time * 1000 : pxVideo.currentTime * 1000) : 0;
+  const pxPaused = () => pxPlay && pxPlay.main ? !!(pxMain && pxMain.paused) : pxVideo.paused;
   function renderPlayer() {
     const on = !!pxPlay;
     document.documentElement.classList.toggle('plexing', on);
+    document.documentElement.classList.toggle('pxmain', !!(on && pxPlay.main));
     if (!on) return;
     const it = pxPlay.item;
     const abs = pxAbs();
+    if (pxPlay.main) {
+      upd('pxCenter', [it.key, it.art, Math.floor(abs / 1000), pxPaused(), pxMain && pxMain.ready], () =>
+        `${it.art ? `<div class="art" style="background-image:url('${pxImg(it.art, 1280, 720)}')"></div>` : ''}<div class="in"><div class="where">Sur le grand écran</div><div class="big">${esc(it.title)}</div>`
+        + `<div class="tm">${pxTime(abs)} / ${pxTime(pxPlay.duration)}${pxPaused() ? ' · en pause' : ''}</div>`
+        + `<div class="hint">${pxMain && pxMain.ready === false ? 'transcodage…' : 'Échap ou double clic sur le grand écran : retour sur la barre'}</div></div>`);
+    }
     const pct = pxPlay.duration ? Math.min(100, abs / pxPlay.duration * 100) : 0;
     const pend = (state && state.pending) || [];
     const tk = pxPlay.tracks || [];
     const cur = (type) => tk.find((t) => t.type === type && t.selected);
     const eps = pxPlay.eps || null;
     // Gauche : l'épisode en cours, puis la saison (ou le résumé pour un film)
-    upd('pxL', [it.key, Math.floor(abs / 1000), pxPlay.duration, pxVideo.paused, pxPlay.loading, pend.length, eps && eps.episodes.map((e) => [e.key, e.viewOffset, e.viewCount])], () =>
+    upd('pxL', [it.key, Math.floor(abs / 1000), pxPlay.duration, pxPaused(), pxPlay.loading, pxPlay.main, pend.length, eps && eps.episodes.map((e) => [e.key, e.viewOffset, e.viewCount])], () =>
       `<div class="px-now">${it.thumb ? `<img class="px-poster" src="${pxImg(it.thumb, 168, 252)}" alt="">` : '<div class="px-poster"></div>'}`
       + `<div><div class="px-title">${esc(it.title)}</div><div class="px-sub">${esc(it.show ? pxSub(it) : (it.year || ''))}</div>`
       + `<div class="px-time">${pxTime(abs)} / ${pxTime(pxPlay.duration)}</div><div class="px-prog"><i style="width:${pct.toFixed(1)}%"></i></div>`
-      + (pxPlay.loading ? '<div class="px-wait">transcodage…</div>' : pxVideo.paused ? '<div class="px-sub">en pause</div>' : '') + `</div></div>`
+      + (pxPlay.main ? '<div class="px-wait">sur le grand écran</div>' : pxPlay.loading ? '<div class="px-wait">transcodage…</div>' : pxVideo.paused ? '<div class="px-sub">en pause</div>' : '') + `</div></div>`
       + (pend.length ? '<div class="dm-ask">Claude attend une réponse · quitter pour répondre</div>' : '')
       + (eps && eps.episodes.length
         ? `<div class="px-lab">${esc(eps.season && eps.season.index != null ? `Saison ${eps.season.index}` : 'Épisodes')} · ${eps.episodes.length}</div><div class="px-eps scroll">`
@@ -2276,14 +2298,15 @@
     // Droite : commandes, puis audio et sous-titres
     const audios = tk.filter((t) => t.type === 'audio'), subs = tk.filter((t) => t.type === 'sub');
     const nextEp = eps && eps.episodes.length ? eps.episodes[eps.episodes.findIndex((e) => e.key === pxPlay.key) + 1] : null;
-    upd('pxR', [pxVideo.paused, Math.round(pxVol * 10), pxPlay.loading, pxPickWait, tk.map((t) => [t.id, t.selected]), nextEp && nextEp.key], () => {
-      const b = (act, label, icon, cls) => `<button type="button" class="sg-btn ${cls || ''}" data-pxact="${act}">${icon}<span>${label}</span></button>`;
+    upd('pxR', [pxPaused(), Math.round(pxVol * 10), pxPlay.loading, pxPickWait, pxMainBusy, !!pxPlay.main, tk.map((t) => [t.id, t.selected]), nextEp && nextEp.key], () => {
+      const b = (act, label, icon, cls) => `<button type="button" class="sg-btn ${cls || ''} ${pxMainBusy ? 'wait' : ''}" data-pxact="${act}">${icon}<span>${label}</span></button>`;
       const t = (type, id, on, label, sub) => `<button type="button" class="px-tk ${on ? 'on' : ''} ${pxPickWait ? 'wait' : ''}" data-pxtrack="${id}" data-pxtype="${type}">${esc(label)}${sub ? `<small>${esc(sub)}</small>` : ''}</button>`;
       return `<div class="px-ctl">`
-        + b('toggle', pxVideo.paused ? 'Lecture' : 'Pause', pxVideo.paused ? PX_ICON.play : PX_ICON.pause, 'cyan')
+        + b('toggle', pxPaused() ? 'Lecture' : 'Pause', pxPaused() ? PX_ICON.play : PX_ICON.pause, 'cyan')
         + b('stop', 'Quitter', PX_ICON.quit)
         + b('back', '−15 s', PX_ICON.back) + b('fwd', '+30 s', PX_ICON.fwd)
         + b('vol-', 'Son −', PX_ICON.vol) + b('vol+', `Son + · ${Math.round(pxVol * 100)} %`, PX_ICON.vol)
+        + (pxPlay.main ? b('tobar', pxMainBusy ? 'Retour…' : 'Renvoyer sur la barre', PX_ICON.bar, 'wide cyan') : b('tomain', pxMainBusy ? 'Envoi…' : 'Grand écran', PX_ICON.screen, 'wide'))
         + (nextEp ? b('next', `Suivant · E${pad(nextEp.index || 0)}`, PX_ICON.next, 'wide') : '')
         + `</div>`
         + `<div class="px-lab">Audio</div><div class="px-set">`
@@ -2296,7 +2319,7 @@
   }
   async function pxTimeline(stateName) {
     if (!pxPlay) return;
-    try { await post('/api/plex/timeline', { key: pxPlay.key, state: stateName, time: Math.floor(pxAbs()), duration: pxPlay.duration, session: pxPlay.session }); } catch { /* Plex le saura au prochain */ }
+    try { await post('/api/plex/timeline', { key: pxPlay.key, state: stateName, time: Math.floor(pxAbs()), duration: pxPlay.duration, session: pxPlay.main ? null : pxPlay.session }); } catch { /* Plex le saura au prochain */ }
   }
   async function pxStart(key, offsetMs) {
     if (pxBusy) return;
@@ -2323,6 +2346,7 @@
   async function pxStop() {
     if (!pxPlay) return;
     await pxTimeline('stopped');
+    if (pxPlay.main) { try { await post('/api/plex/main', { op: 'close' }); } catch { /* déjà fermée */ } pxMain = null; }
     pxPlay = null;
     pxVideo.pause();
     pxVideo.removeAttribute('src');
@@ -2330,9 +2354,52 @@
     renderPlayer();
     post('/api/plex/refresh').catch(() => {});
   }
+  // Envoi sur le grand écran : BarreTouch ouvre une fenêtre vidéo, la barre devient la télécommande
+  async function pxToMain() {
+    if (!pxPlay || pxMainBusy) return;
+    pxMainBusy = true; delete cache.pxR; renderPlayer();
+    try {
+      const abs = pxAbs();
+      const r = await post('/api/plex/main', { op: 'open', key: pxPlay.key, time: abs / 1000, volume: pxVol });
+      pxVideo.pause(); pxVideo.removeAttribute('src'); pxVideo.load();
+      pxPlay.main = true; pxPlay.session = r.session; pxPlay.loading = false;
+      pxMain = { time: abs / 1000, paused: false, ready: false };
+      toast('Lecture sur le grand écran');
+    } catch (err) { toast(err.message); }
+    pxMainBusy = false;
+    delete cache.pxL; delete cache.pxR; renderPlayer();
+  }
+  // Retour sur la barre : la fenêtre du grand écran se ferme, la lecture repart ici au même endroit
+  async function pxToBar(time) {
+    if (!pxPlay || pxMainBusy) return;
+    pxMainBusy = true; delete cache.pxR; renderPlayer();
+    const k = pxPlay.key, eps = pxPlay.eps, tracks = pxPlay.tracks;
+    let t = time;
+    try {
+      if (t === undefined) { const r = await post('/api/plex/main', { op: 'close' }); t = Number(r.time) || (pxMain ? pxMain.time : 0); }
+    } catch (err) { toast(err.message); t = pxMain ? pxMain.time : 0; }
+    pxPlay = null; pxMain = null; pxMainBusy = false;
+    await pxStart(k, (t || 0) * 1000);
+    if (pxPlay) { pxPlay.eps = eps; pxPlay.tracks = tracks; delete cache.pxL; delete cache.pxR; renderPlayer(); }
+  }
+  async function pxMainCmd(body) {
+    try { const r = await post('/api/plex/main', body); if (r && typeof r.open === 'boolean') pxMain = { ...(pxMain || {}), ...r }; } catch (err) { toast(err.message); }
+    delete cache.pxR; delete cache.pxCenter; renderPlayer();
+  }
   async function pxAction(act) {
     if (!pxPlay) return;
     lastTouch = Date.now();
+    if (act === 'tomain') return pxToMain();
+    if (act === 'tobar') return pxToBar();
+    if (pxPlay.main) {
+      // Télécommande du grand écran
+      if (act === 'toggle') return pxMainCmd({ op: pxPaused() ? 'play' : 'pause' });
+      if (act === 'back' || act === 'fwd') return pxMainCmd({ op: 'seek', time: Math.max(0, (pxMain ? pxMain.time : 0) + (act === 'back' ? -15 : 30)) });
+      if (act === 'vol-' || act === 'vol+') { pxVol = Math.max(0, Math.min(1, pxVol + (act === 'vol-' ? -0.1 : 0.1))); return pxMainCmd({ op: 'volume', value: pxVol }); }
+      if (act === 'stop') { await pxTimeline('stopped'); try { await post('/api/plex/main', { op: 'close' }); } catch { /* déjà fermée */ } pxPlay = null; pxMain = null; renderPlayer(); post('/api/plex/refresh').catch(() => {}); return; }
+      if (act === 'next') return pxNext();
+      return;
+    }
     if (act === 'toggle') { if (pxVideo.paused) pxVideo.play().catch(() => {}); else pxVideo.pause(); setTimeout(() => { renderPlayer(); pxTimeline(pxVideo.paused ? 'paused' : 'playing'); }, 150); return; }
     if (act === 'back' || act === 'fwd') { const abs = Math.max(0, Math.min(pxPlay.duration || 1e12, pxAbs() + (act === 'back' ? -15000 : 30000))); const k = pxPlay.key; await pxTimeline('stopped'); pxPlay = null; return pxStart(k, abs); }
     if (act === 'vol-' || act === 'vol+') { pxVol = Math.max(0, Math.min(1, pxVol + (act === 'vol-' ? -0.1 : 0.1))); pxVideo.volume = pxVol; renderPlayer(); return; }
@@ -2345,11 +2412,12 @@
     const list = pxPlay.eps.episodes;
     const nx = list[list.findIndex((e) => e.key === pxPlay.key) + 1];
     if (!nx) return pxStop();
-    const eps = pxPlay.eps;
+    const eps = pxPlay.eps, wasMain = !!pxPlay.main;
     await pxTimeline('stopped');
-    pxPlay = null;
+    if (wasMain) { try { await post('/api/plex/main', { op: 'close' }); } catch { /* déjà fermée */ } }
+    pxPlay = null; pxMain = null;
     await pxStart(nx.key, nx.viewCount ? 0 : (nx.viewOffset || 0));
-    if (pxPlay) { pxPlay.eps = eps; delete cache.pxL; delete cache.pxR; renderPlayer(); }
+    if (pxPlay) { pxPlay.eps = eps; delete cache.pxL; delete cache.pxR; renderPlayer(); if (wasMain) await pxToMain(); }
   }
   // Changement de piste : Plex la mémorise, puis la session HLS repart à la même position (2 à 3 s de noir)
   async function pxTrack(type, id) {
@@ -2357,11 +2425,12 @@
     pxPickWait = true; delete cache.pxR; renderPlayer();
     try {
       const r = await post('/api/plex/select', { key: pxPlay.key, [type === 'audio' ? 'audio' : 'subtitle']: Number(id) });
-      const abs = pxAbs(), k = pxPlay.key, eps = pxPlay.eps;
+      const abs = pxAbs(), k = pxPlay.key, eps = pxPlay.eps, wasMain = !!pxPlay.main;
       await pxTimeline('stopped');
-      pxPlay = null; pxPickWait = false;
+      if (wasMain) { try { await post('/api/plex/main', { op: 'close' }); } catch { /* déjà fermée */ } }
+      pxPlay = null; pxMain = null; pxPickWait = false;
       await pxStart(k, abs);
-      if (pxPlay) { pxPlay.tracks = r.tracks || pxPlay.tracks; pxPlay.eps = eps; }
+      if (pxPlay) { pxPlay.tracks = r.tracks || pxPlay.tracks; pxPlay.eps = eps; if (wasMain) await pxToMain(); }
       toast(type === 'audio' ? 'Piste audio changée' : (Number(id) ? 'Sous-titres changés' : 'Sous-titres retirés'));
     } catch (err) { toast(err.message); pxPickWait = false; }
     delete cache.pxL; delete cache.pxR; renderPlayer();
@@ -2371,10 +2440,20 @@
   pxVideo.addEventListener('ended', () => { pxNext(); });
   pxVideo.addEventListener('error', () => { if (pxPlay) { toast('Plex : lecture impossible'); pxStop(); } });
   pxVideo.addEventListener('click', () => pxAction('toggle'));
-  setInterval(() => {
+  setInterval(async () => {
     if (!pxPlay) return;
+    if (pxPlay.main && !pxMainBusy) {
+      try {
+        const r = await post('/api/plex/main', { op: 'status' });
+        if (!pxPlay || !pxPlay.main) return;
+        if (r.open === false) { return pxToBar(Number(r.time) || (pxMain ? pxMain.time : 0)); }   // fermée depuis le grand écran (Échap)
+        pxMain = { time: Number(r.time) || 0, paused: !!r.paused, duration: r.duration, volume: r.volume, ready: !!r.ready };
+        const dur = (pxMain.duration || pxPlay.duration / 1000);
+        if (!r.paused && dur && pxMain.time >= dur - 1) { return pxNext(); }
+      } catch { /* BarreTouch muette un instant */ }
+    }
     renderPlayer();
-    if (!pxVideo.paused && Date.now() - pxTl > 10000) { pxTl = Date.now(); pxTimeline('playing'); }
+    if (!pxPaused() && Date.now() - pxTl > 10000) { pxTl = Date.now(); pxTimeline('playing'); }
   }, 1000);
   // Les listes du lecteur (épisodes, pistes) se font défiler au doigt comme les autres
   $('plexLive').addEventListener('pointerdown', (e) => {

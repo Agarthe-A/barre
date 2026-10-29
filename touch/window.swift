@@ -226,6 +226,9 @@ extension App {
     case "discord":
       // Mosaïque des flux Discord (mosaic.swift)
       return mosaic.request(j)
+    case "plex":
+      // Lecture Plex sur le grand écran (plexwindow.swift)
+      return plexWindow.request(j)
     case "eden":
       let target = (j["target"] as? String) ?? "main"
       if target == "bar" {
