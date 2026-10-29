@@ -569,17 +569,39 @@
   #plexLive { display: none; position: fixed; inset: 0; z-index: 41; background: #000; color: var(--text); }
   html.plexing #stage { visibility: hidden; }
   html.plexing #plexLive { display: block; }
-  #pxVideo { position: absolute; left: 160px; top: 0; width: 1600px; height: 720px; object-fit: contain; background: #000; }
-  #plexLive .sg-side { padding: 20px 14px; gap: 12px; background: #000; }
-  .px-poster { width: 100%; max-width: 132px; border-radius: 10px; display: block; }
-  .px-title { font-size: 18px; font-weight: 700; line-height: 1.15; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-  .px-sub { font-family: var(--mono); font-size: 13px; color: var(--dim); line-height: 1.4; }
-  .px-time { font-family: var(--mono); font-size: 15px; color: var(--text-2); }
-  .px-prog { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+  #pxVideo { position: absolute; left: 320px; top: 0; width: 1280px; height: 720px; object-fit: contain; background: #000; }
+  #plexLive .sg-side { width: 320px; padding: 18px 16px; gap: 12px; background: #000; }
+  .px-now { display: grid; grid-template-columns: 84px minmax(0, 1fr); gap: 12px; align-items: start; flex: none; }
+  .px-poster { width: 84px; height: 126px; border-radius: 8px; object-fit: cover; display: block; background: var(--tile); }
+  .px-title { font-size: 19px; font-weight: 700; line-height: 1.15; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .px-sub { font-family: var(--mono); font-size: 13px; color: var(--dim); line-height: 1.4; margin-top: 4px; }
+  .px-time { font-family: var(--mono); font-size: 15px; color: var(--text-2); margin-top: 6px; }
+  .px-prog { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; margin-top: 6px; }
   .px-prog > i { display: block; height: 100%; background: #E5A00D; }
-  #plexLive .sg-btn { font-size: 18px; gap: 8px; }
-  #plexLive .sg-btn svg { width: 34px; height: 34px; }
-  .px-wait { font-family: var(--mono); font-size: 13px; color: #E5A00D; }
+  .px-wait { font-family: var(--mono); font-size: 13px; color: #E5A00D; margin-top: 4px; }
+  .px-lab { font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em; color: var(--dim); text-transform: uppercase; flex: none; }
+  .px-eps { display: flex; flex-direction: column; gap: 6px; min-height: 0; overflow-y: auto; scrollbar-width: none; }
+  .px-eps::-webkit-scrollbar { display: none; }
+  .px-ep { width: 100%; display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; gap: 8px; align-items: center; min-height: 50px; padding: 6px 10px; border-radius: 12px; background: var(--tile); border: 2px solid transparent; text-align: left; }
+  .px-ep.on { border-color: #E5A00D; }
+  .px-ep .n { font-family: var(--mono); font-size: 15px; color: var(--dim); }
+  .px-ep.on .n { color: #E5A00D; }
+  .px-ep .t { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .px-ep .b { height: 4px; border-radius: 2px; background: var(--line); margin-top: 5px; overflow: hidden; }
+  .px-ep .b > i { display: block; height: 100%; background: #E5A00D; }
+  .px-ep .v { font-family: var(--mono); font-size: 12px; color: var(--dim); }
+  .px-ep .v.seen { color: var(--up); }
+  .px-summary { font-size: 14px; color: var(--muted); line-height: 1.4; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 12; -webkit-box-orient: vertical; }
+  .px-ctl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; flex: none; }
+  .px-ctl .sg-btn { flex: none; height: 64px; font-size: 16px; gap: 6px; border-radius: 16px; flex-direction: row; }
+  .px-ctl .sg-btn svg { width: 26px; height: 26px; }
+  .px-ctl .sg-btn.wide { grid-column: 1 / -1; }
+  .px-set { display: flex; flex-direction: column; gap: 6px; min-height: 0; overflow-y: auto; scrollbar-width: none; }
+  .px-set::-webkit-scrollbar { display: none; }
+  .px-tk { width: 100%; min-height: 42px; padding: 5px 10px; border-radius: 12px; background: var(--tile); border: 2px solid #26282C; font-size: 14px; font-weight: 600; line-height: 1.15; text-align: left; }
+  .px-tk.on { border-color: #E5A00D; color: #E5A00D; }
+  .px-tk.wait { opacity: 0.5; }
+  .px-tk small { display: block; font-family: var(--mono); font-size: 11px; color: var(--dim); font-weight: 400; margin-top: 2px; }
 
   #offline { position: absolute; right: 24px; top: 8px; font-family: var(--mono); font-size: 18px; color: var(--attention); display: none; z-index: 5; }
   #toast { position: absolute; left: 50%; bottom: 70px; transform: translateX(-50%); padding: 14px 24px; border-radius: 14px; background: #23252A; font-size: 24px; opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 5; white-space: nowrap; }
@@ -2178,7 +2200,8 @@
   }
 
   // -- Plex : Reprendre et nouveautés ; la lecture se fait dans la page (HLS de Plex lu par WebKit)
-  let pxPlay = null;        // { key, item, session, offset (s), duration (ms), paused } pendant une lecture
+  let pxPlay = null;        // { key, item, session, offset (s), duration (ms), tracks, eps } pendant une lecture
+  let pxPickWait = false;   // changement de piste en cours
   let pxVol = 0.8;
   let pxTl = 0, pxBusy = false;
   const pxVideo = $('pxVideo');
@@ -2187,6 +2210,7 @@
   const pxSub = (it) => it.show ? `${it.show} · S${pad(it.season || 0)}E${pad(it.episode || 0)}` : (it.year ? String(it.year) : '');
   const PX_ICON = {
     play: ICON.play, pause: ICON.pause,
+    next: ICON.next,
     back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4.5A8 8 0 1 1 4.6 9"/><path d="M4 4v5h5"/></svg>',
     fwd: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4.5A8 8 0 1 0 19.4 9"/><path d="M20 4v5h-5"/></svg>',
     vol: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M17.8 6.5a7.5 7.5 0 0 1 0 11"/></svg>',
@@ -2231,18 +2255,43 @@
     const abs = pxAbs();
     const pct = pxPlay.duration ? Math.min(100, abs / pxPlay.duration * 100) : 0;
     const pend = (state && state.pending) || [];
-    upd('pxL', [it.key, Math.floor(abs / 1000), pxPlay.duration, pxVideo.paused, pxPlay.loading, pend.length], () =>
-      `${it.thumb ? `<img class="px-poster" src="${pxImg(it.thumb, 264, 396)}" alt="">` : ''}`
-      + `<div class="px-title">${esc(it.show ? it.title : it.title)}</div><div class="px-sub">${esc(it.show ? pxSub(it) : (it.year || ''))}</div>`
+    const tk = pxPlay.tracks || [];
+    const cur = (type) => tk.find((t) => t.type === type && t.selected);
+    const eps = pxPlay.eps || null;
+    // Gauche : l'épisode en cours, puis la saison (ou le résumé pour un film)
+    upd('pxL', [it.key, Math.floor(abs / 1000), pxPlay.duration, pxVideo.paused, pxPlay.loading, pend.length, eps && eps.episodes.map((e) => [e.key, e.viewOffset, e.viewCount])], () =>
+      `<div class="px-now">${it.thumb ? `<img class="px-poster" src="${pxImg(it.thumb, 168, 252)}" alt="">` : '<div class="px-poster"></div>'}`
+      + `<div><div class="px-title">${esc(it.title)}</div><div class="px-sub">${esc(it.show ? pxSub(it) : (it.year || ''))}</div>`
       + `<div class="px-time">${pxTime(abs)} / ${pxTime(pxPlay.duration)}</div><div class="px-prog"><i style="width:${pct.toFixed(1)}%"></i></div>`
-      + (pxPlay.loading ? '<div class="px-wait">transcodage…</div>' : pxVideo.paused ? '<div class="px-sub">en pause</div>' : '')
-      + (pend.length ? '<div class="dm-ask">Claude attend une réponse · quitter pour répondre</div>' : '<div class="dm-hint">Touche la vidéo : pause / lecture</div>'));
-    upd('pxR', [pxVideo.paused, Math.round(pxVol * 10), pxPlay.loading], () => {
+      + (pxPlay.loading ? '<div class="px-wait">transcodage…</div>' : pxVideo.paused ? '<div class="px-sub">en pause</div>' : '') + `</div></div>`
+      + (pend.length ? '<div class="dm-ask">Claude attend une réponse · quitter pour répondre</div>' : '')
+      + (eps && eps.episodes.length
+        ? `<div class="px-lab">${esc(eps.season && eps.season.index != null ? `Saison ${eps.season.index}` : 'Épisodes')} · ${eps.episodes.length}</div><div class="px-eps scroll">`
+          + eps.episodes.map((e) => {
+            const p2 = e.duration ? Math.min(100, e.viewOffset / e.duration * 100) : 0;
+            const v = e.viewCount ? '<span class="v seen">vu</span>' : e.viewOffset ? `<span class="v">${Math.round(p2)} %</span>` : '<span class="v"></span>';
+            return `<button type="button" class="px-ep ${e.key === pxPlay.key ? 'on' : ''}" data-pxplay="${esc(e.key)}" data-pxoffset="${e.viewCount ? 0 : (e.viewOffset || 0)}"><span class="n">E${pad(e.index || 0)}</span><div><div class="t">${esc(e.title)}</div>${p2 && !e.viewCount ? `<div class="b"><i style="width:${p2.toFixed(0)}%"></i></div>` : ''}</div>${v}</button>`;
+          }).join('') + '</div>'
+        : (it.summary ? `<div class="px-lab">Résumé</div><div class="px-summary">${esc(it.summary)}</div>` : '')));
+    // Droite : commandes, puis audio et sous-titres
+    const audios = tk.filter((t) => t.type === 'audio'), subs = tk.filter((t) => t.type === 'sub');
+    const nextEp = eps && eps.episodes.length ? eps.episodes[eps.episodes.findIndex((e) => e.key === pxPlay.key) + 1] : null;
+    upd('pxR', [pxVideo.paused, Math.round(pxVol * 10), pxPlay.loading, pxPickWait, tk.map((t) => [t.id, t.selected]), nextEp && nextEp.key], () => {
       const b = (act, label, icon, cls) => `<button type="button" class="sg-btn ${cls || ''}" data-pxact="${act}">${icon}<span>${label}</span></button>`;
-      return b('toggle', pxVideo.paused ? 'Lecture' : 'Pause', pxVideo.paused ? PX_ICON.play : PX_ICON.pause, 'cyan')
+      const t = (type, id, on, label, sub) => `<button type="button" class="px-tk ${on ? 'on' : ''} ${pxPickWait ? 'wait' : ''}" data-pxtrack="${id}" data-pxtype="${type}">${esc(label)}${sub ? `<small>${esc(sub)}</small>` : ''}</button>`;
+      return `<div class="px-ctl">`
+        + b('toggle', pxVideo.paused ? 'Lecture' : 'Pause', pxVideo.paused ? PX_ICON.play : PX_ICON.pause, 'cyan')
+        + b('stop', 'Quitter', PX_ICON.quit)
         + b('back', '−15 s', PX_ICON.back) + b('fwd', '+30 s', PX_ICON.fwd)
-        + b('vol-', `Son −`, PX_ICON.vol) + b('vol+', `Son + · ${Math.round(pxVol * 100)} %`, PX_ICON.vol)
-        + b('stop', 'Quitter', PX_ICON.quit);
+        + b('vol-', 'Son −', PX_ICON.vol) + b('vol+', `Son + · ${Math.round(pxVol * 100)} %`, PX_ICON.vol)
+        + (nextEp ? b('next', `Suivant · E${pad(nextEp.index || 0)}`, PX_ICON.next, 'wide') : '')
+        + `</div>`
+        + `<div class="px-lab">Audio</div><div class="px-set">`
+        + (audios.length ? audios.map((a) => t('audio', a.id, a.selected, a.label.split(' · ')[0], a.label.split(' · ').slice(1).join(' · '))).join('') : '<div class="dm-hint">une seule piste</div>')
+        + `</div><div class="px-lab">Sous-titres</div><div class="px-set">`
+        + t('sub', 0, !cur('sub'), 'Aucun', '')
+        + subs.map((x) => t('sub', x.id, x.selected, x.label.split(' · ')[0], x.label.split(' · ').slice(1).join(' · '))).join('')
+        + `</div>`;
     });
   }
   async function pxTimeline(stateName) {
@@ -2254,11 +2303,14 @@
     pxBusy = true;
     try {
       if (pxPlay && pxPlay.key !== key) await pxTimeline('stopped');
+      if (pxPlay && pxPlay.key === key) return pxBusy = false;   // déjà en lecture
       // La barre ne montre qu'une chose à la fois : la mosaïque Discord s'efface
       if (state && state.discord && state.discord.active) await post('/api/discord/stop').catch(() => {});
       const offset = Math.floor(Math.max(0, offsetMs || 0) / 1000);
       const r = await post('/api/plex/play', { key, offset });
-      pxPlay = { key, item: r.item, session: r.session, offset, duration: r.item.duration || 0, loading: true };
+      const keepEps = pxPlay && pxPlay.eps && pxPlay.eps.episodes.some((e) => e.key === key) ? pxPlay.eps : null;
+      pxPlay = { key, item: r.item, session: r.session, offset, duration: r.item.duration || 0, loading: true, tracks: r.tracks || [], eps: keepEps };
+      if (r.item.type === 'episode' && !keepEps) fetch(`/api/plex/episodes?key=${encodeURIComponent(key)}`).then((x) => x.json()).then((j) => { if (pxPlay && pxPlay.key === key && j.ok) { pxPlay.eps = j; delete cache.pxL; delete cache.pxR; renderPlayer(); } }).catch(() => {});
       pxVideo.volume = pxVol;
       pxVideo.src = r.src;
       renderPlayer();
@@ -2285,18 +2337,52 @@
     if (act === 'back' || act === 'fwd') { const abs = Math.max(0, Math.min(pxPlay.duration || 1e12, pxAbs() + (act === 'back' ? -15000 : 30000))); const k = pxPlay.key; await pxTimeline('stopped'); pxPlay = null; return pxStart(k, abs); }
     if (act === 'vol-' || act === 'vol+') { pxVol = Math.max(0, Math.min(1, pxVol + (act === 'vol-' ? -0.1 : 0.1))); pxVideo.volume = pxVol; renderPlayer(); return; }
     if (act === 'stop') return pxStop();
+    if (act === 'next') return pxNext();
+  }
+  // Épisode suivant de la saison (bouton, ou enchaînement automatique à la fin)
+  async function pxNext() {
+    if (!pxPlay || !pxPlay.eps) return pxStop();
+    const list = pxPlay.eps.episodes;
+    const nx = list[list.findIndex((e) => e.key === pxPlay.key) + 1];
+    if (!nx) return pxStop();
+    const eps = pxPlay.eps;
+    await pxTimeline('stopped');
+    pxPlay = null;
+    await pxStart(nx.key, nx.viewCount ? 0 : (nx.viewOffset || 0));
+    if (pxPlay) { pxPlay.eps = eps; delete cache.pxL; delete cache.pxR; renderPlayer(); }
+  }
+  // Changement de piste : Plex la mémorise, puis la session HLS repart à la même position (2 à 3 s de noir)
+  async function pxTrack(type, id) {
+    if (!pxPlay || pxPickWait) return;
+    pxPickWait = true; delete cache.pxR; renderPlayer();
+    try {
+      const r = await post('/api/plex/select', { key: pxPlay.key, [type === 'audio' ? 'audio' : 'subtitle']: Number(id) });
+      const abs = pxAbs(), k = pxPlay.key, eps = pxPlay.eps;
+      await pxTimeline('stopped');
+      pxPlay = null; pxPickWait = false;
+      await pxStart(k, abs);
+      if (pxPlay) { pxPlay.tracks = r.tracks || pxPlay.tracks; pxPlay.eps = eps; }
+      toast(type === 'audio' ? 'Piste audio changée' : (Number(id) ? 'Sous-titres changés' : 'Sous-titres retirés'));
+    } catch (err) { toast(err.message); pxPickWait = false; }
+    delete cache.pxL; delete cache.pxR; renderPlayer();
   }
   pxVideo.addEventListener('playing', () => { if (pxPlay) { pxPlay.loading = false; renderPlayer(); pxTimeline('playing'); } });
   pxVideo.addEventListener('waiting', () => { if (pxPlay) { pxPlay.loading = true; renderPlayer(); } });
-  pxVideo.addEventListener('ended', () => { pxStop(); });
+  pxVideo.addEventListener('ended', () => { pxNext(); });
   pxVideo.addEventListener('error', () => { if (pxPlay) { toast('Plex : lecture impossible'); pxStop(); } });
   pxVideo.addEventListener('click', () => pxAction('toggle'));
   setInterval(() => {
     if (!pxPlay) return;
     renderPlayer();
     if (!pxVideo.paused && Date.now() - pxTl > 10000) { pxTl = Date.now(); pxTimeline('playing'); }
-    if (pxPlay.duration && pxAbs() >= pxPlay.duration - 1500 && pxVideo.ended) pxStop();
   }, 1000);
+  // Les listes du lecteur (épisodes, pistes) se font défiler au doigt comme les autres
+  $('plexLive').addEventListener('pointerdown', (e) => {
+    const sc = e.target.closest && e.target.closest('.scroll');
+    if (!sc || e.button > 0) return;
+    lastTouch = Date.now();
+    drag = { x: e.clientX, y: e.clientY, t: performance.now(), axis: null, sc, top: sc.scrollTop, ovl: true };
+  });
 
   function render(s) {
     state = s;
@@ -2367,6 +2453,7 @@
     if ((el = t('[data-dcself]'))) { selfAction(el.dataset.dcself); return; }
     if ((el = t('[data-pxplay]'))) { pxStart(el.dataset.pxplay, Number(el.dataset.pxoffset) || 0); return; }
     if ((el = t('[data-pxact]'))) { pxAction(el.dataset.pxact); return; }
+    if ((el = t('[data-pxtrack]'))) { pxTrack(el.dataset.pxtype, el.dataset.pxtrack); return; }
     if ((el = t('[data-volclose]'))) { volAction('close', el); return; }
     if ((el = t('[data-volstep]'))) { volAction('step', el); return; }
     if ((el = t('[data-volmute]'))) { volAction('mute', el); return; }

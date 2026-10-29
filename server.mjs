@@ -1297,11 +1297,13 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, { 'content-type': r.headers.get('content-type') || 'image/jpeg', 'cache-control': 'max-age=86400' });
       return res.end(Buffer.from(await r.arrayBuffer()));
     }
-    if (req.method === 'POST' && (m = p.match(/^\/api\/plex\/(play|timeline|refresh)$/))) {
+    if (req.method === 'GET' && p === '/api/plex/episodes') return json(res, 200, await px.episodes(String(url.searchParams.get('key') || '')));
+    if (req.method === 'POST' && (m = p.match(/^\/api\/plex\/(play|select|timeline|refresh)$/))) {
       if (config.plex?.enabled === false) return json(res, 404, { error: 'Plex désactivé' });
       const body = await readBody(req);
       let r;
       if (m[1] === 'play') r = await px.play(String(body.key || ''), Number(body.offset) || 0);
+      else if (m[1] === 'select') r = await px.select(String(body.key || ''), body);
       else if (m[1] === 'timeline') r = await px.timeline(body);
       else { await refreshPlexPage(); r = { ok: true }; }
       if (m[1] !== 'refresh') broadcast(true);
