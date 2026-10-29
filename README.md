@@ -1,7 +1,7 @@
 # Barre — tableau de bord tactile du Mac mini
 
-Un tableau de bord pour une barre tactile Wisecoco 12,3" (1920×720) branchée à un Mac mini : onze pages
-(accueil, tâches, musique, agenda, serveur, maison, Claude Code, patrimoine, Kanban, Switch, Discord), un
+Un tableau de bord pour une barre tactile Wisecoco 12,3" (1920×720) branchée à un Mac mini : douze pages
+(accueil, tâches, musique, agenda, serveur, maison, Claude Code, patrimoine, Kanban, Switch, Discord, Plex), un
 serveur Node sans dépendance, et une app macOS (BarreTouch) qui affiche la page sur la barre, rend son
 tactile utilisable et sert de bras pour ce qu'une page web ne peut pas faire (fenêtres d'autres apps,
 captures d'écran, accessibilité). Le correctif USB qui fait marcher le tactile de cette barre sur Mac est
@@ -266,6 +266,26 @@ API (même jeton) : `POST /api/discord/self` (`{"mute": bool}` ou `{"deaf": bool
 `add` / `remove` (`{"window": <id>}`), `stop`, `focus` (`{"index": n}`, -1 = grille), `mode`
 (`{"mode": "grid"|"whole"}`), `rescan`, `snapshot` ; l'état est dans `discord` du flux `/api/events`
 (`ax` : salon, participants, streams). Relais : `POST 127.0.0.1:4748/window` avec `{"action":"discord","op":…}`.
+
+## Plex (page 12) : regarder sa médiathèque sur la barre
+
+Plex Media Server tourne sur le Mac (jeton lu dans ses réglages, comme pour la page Serveur). La page
+montre **Reprendre** (On Deck, avec la progression) et les **nouveautés** (films, premier épisode non vu
+d'une saison ajoutée). Un appui lance la lecture dans la page : Plex transcode en HLS (profil Safari,
+1080p, 12 Mbit/s), WebKit le lit nativement sur la barre, le son sort du Mac. Bande de gauche : affiche,
+titre, position ; bande de droite : lecture / pause, −15 s, +30 s, son −/+, quitter ; un appui sur la
+vidéo met en pause. La position est renvoyée à Plex toutes les 10 s (`/:/timeline`) : Reprendre et
+« vu » restent justes, et le transcodage est arrêté en quittant. Pendant une lecture, la barre ne revient
+pas à l'accueil et un stream Discord ne s'invite pas ; lancer Plex efface la mosaïque Discord.
+
+Le serveur fait relais vers Plex avec le jeton, la page ne le voit jamais : `GET /api/plex/img`
+(affiches), `GET /api/plex/hls/<session>/…` (listes HLS et segments ; le lecteur de WebKit n'envoie ni
+cookie ni jeton aux sous-requêtes, c'est l'identifiant de session, aléatoire et créé par
+`POST /api/plex/play`, qui fait foi ; les listes sont renvoyées d'un bloc, WebKit refuse une liste
+diffusée en flux). `POST /api/plex/play` (`{"key", "offset"}` → `src`, `session`), `timeline`
+(`{"key", "state", "time", "duration", "session"}`), `refresh`. `config.json` : `"plex": { "url",
+"recentSections": [12, 13, 14] }` (sections des nouveautés), `"enabled": false` masque la page.
+Changer de position (−15 s, +30 s) relance une session HLS au nouveau décalage.
 
 ## Vitrine (2026-10-29)
 Page de présentation du hub: `~/clawd/projects/hub/vitrines/barre/`. Outils pour la refaire: `vitrine/` (`./vitrine/refaire.sh` lance une copie du tableau de bord en `BARRE_DEMO=1` sur le port 4799 avec une config jetable, jamais le vrai service ni `~/.config/barre`). Détails et état dans `projects/hub.md` (section « Vitrine barre »).

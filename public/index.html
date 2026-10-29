@@ -548,6 +548,39 @@
   .dm-st.wait { opacity: 0.5; }
   .dm-st span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+  /* ===== Plex (reprendre, nouveautés, lecture sur la barre) ===== */
+  .px { display: grid; grid-template-rows: 56px minmax(0, 1fr); gap: 16px; height: 100%; }
+  .px-body { display: grid; grid-template-columns: 720px minmax(0, 1fr); gap: 28px; min-height: 0; }
+  .px-col { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+  .px-deck { display: flex; flex-direction: column; gap: 10px; padding: 4px 2px; }
+  .px-card { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 16px; align-items: center; width: 100%; padding: 10px 14px; border-radius: 16px; background: var(--tile); text-align: left; }
+  .px-card img, .px-card .ph { width: 76px; height: 114px; border-radius: 8px; object-fit: cover; background: #1E2024; display: block; }
+  .px-card .t { font-size: 23px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .px-card .s { font-family: var(--mono); font-size: 16px; color: var(--dim); margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .px-card .bar { margin-top: 10px; height: 8px; }
+  .px-card .bar > i { background: #E5A00D; }
+  .px-grid { display: grid; grid-template-columns: repeat(auto-fill, 150px); gap: 16px 18px; align-content: start; padding: 4px 2px; }
+  .px-tile { width: 150px; text-align: left; }
+  .px-tile img, .px-tile .ph { width: 150px; height: 225px; border-radius: 10px; object-fit: cover; background: #1E2024; display: block; }
+  .px-tile .ph { display: grid; place-items: center; font-size: 44px; font-weight: 700; color: var(--muted); }
+  .px-tile .t { font-size: 17px; font-weight: 600; margin-top: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .px-tile .s { font-family: var(--mono); font-size: 13px; color: var(--dim); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* Lecture sur la barre : la vidéo au centre, commandes dans les bandes */
+  #plexLive { display: none; position: fixed; inset: 0; z-index: 41; background: #000; color: var(--text); }
+  html.plexing #stage { visibility: hidden; }
+  html.plexing #plexLive { display: block; }
+  #pxVideo { position: absolute; left: 160px; top: 0; width: 1600px; height: 720px; object-fit: contain; background: #000; }
+  #plexLive .sg-side { padding: 20px 14px; gap: 12px; background: #000; }
+  .px-poster { width: 100%; max-width: 132px; border-radius: 10px; display: block; }
+  .px-title { font-size: 18px; font-weight: 700; line-height: 1.15; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .px-sub { font-family: var(--mono); font-size: 13px; color: var(--dim); line-height: 1.4; }
+  .px-time { font-family: var(--mono); font-size: 15px; color: var(--text-2); }
+  .px-prog { height: 8px; border-radius: 4px; background: var(--line); overflow: hidden; }
+  .px-prog > i { display: block; height: 100%; background: #E5A00D; }
+  #plexLive .sg-btn { font-size: 18px; gap: 8px; }
+  #plexLive .sg-btn svg { width: 34px; height: 34px; }
+  .px-wait { font-family: var(--mono); font-size: 13px; color: #E5A00D; }
+
   #offline { position: absolute; right: 24px; top: 8px; font-family: var(--mono); font-size: 18px; color: var(--attention); display: none; z-index: 5; }
   #toast { position: absolute; left: 50%; bottom: 70px; transform: translateX(-50%); padding: 14px 24px; border-radius: 14px; background: #23252A; font-size: 24px; opacity: 0; transition: opacity 0.2s; pointer-events: none; z-index: 5; white-space: nowrap; }
   #toast.show { opacity: 1; }
@@ -767,6 +800,20 @@
       </div>
     </section>
 
+    <!-- 12 · Plex : reprendre, nouveautés, lecture sur la barre -->
+    <section class="page" data-name="Plex">
+      <div class="px">
+        <div class="head">
+          <div class="kgw"><div class="label">Plex</div><div class="pill" id="pxPill"><span class="dot"></span><span>…</span></div></div>
+          <div class="sw-chip" id="pxChip"><span class="dot"></span><span>…</span></div>
+        </div>
+        <div class="px-body">
+          <div class="px-col"><div class="label">Reprendre</div><div class="px-deck scroll" id="pxDeck"></div></div>
+          <div class="px-col"><div class="label">Nouveautés</div><div class="px-grid scroll" id="pxRecent"></div></div>
+        </div>
+      </div>
+    </section>
+
   </div>
   <nav id="nav" aria-label="Pages"></nav>
   <div class="ovl" id="ovlTask"><div class="sheet" id="taskSheet"></div></div>
@@ -790,6 +837,11 @@
   <div id="sgHole"></div>
   <aside class="sg-side sg-l" id="sgL"></aside>
   <aside class="sg-side sg-r" id="sgR"></aside>
+</div>
+<div id="plexLive">
+  <video id="pxVideo" playsinline preload="auto"></video>
+  <aside class="sg-side sg-l" id="pxL"></aside>
+  <aside class="sg-side sg-r" id="pxR"></aside>
 </div>
 <div id="dcLive">
   <div id="dmHole"></div>
@@ -916,6 +968,7 @@
     if (page === 2 && state && state.music && state.music.state === 'playing') return;
     if (pages[page] && pages[page].dataset.name === 'Switch' && state && state.switch && state.switch.eden && state.switch.eden.playing) return;
     if (pages[page] && pages[page].dataset.name === 'Discord' && state && state.discord && state.discord.active) return;
+    if (pxPlay) return;
     go(0);
   }, 5000);
 
@@ -2124,6 +2177,127 @@
     if (state) { delete cache.dcActs; delete cache.dcWins; renderDiscord(state); }
   }
 
+  // -- Plex : Reprendre et nouveautés ; la lecture se fait dans la page (HLS de Plex lu par WebKit)
+  let pxPlay = null;        // { key, item, session, offset (s), duration (ms), paused } pendant une lecture
+  let pxVol = 0.8;
+  let pxTl = 0, pxBusy = false;
+  const pxVideo = $('pxVideo');
+  const pxImg = (path, w, h) => path ? `/api/plex/img?path=${encodeURIComponent(path)}&w=${w}&h=${h}` : '';
+  const pxTime = (ms) => { const s = Math.max(0, Math.round((ms || 0) / 1000)); const h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), x = s % 60; return h ? `${h}:${pad(m)}:${pad(x)}` : `${m}:${pad(x)}`; };
+  const pxSub = (it) => it.show ? `${it.show} · S${pad(it.season || 0)}E${pad(it.episode || 0)}` : (it.year ? String(it.year) : '');
+  const PX_ICON = {
+    play: ICON.play, pause: ICON.pause,
+    back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4.5A8 8 0 1 1 4.6 9"/><path d="M4 4v5h5"/></svg>',
+    fwd: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13 4.5A8 8 0 1 0 19.4 9"/><path d="M20 4v5h-5"/></svg>',
+    vol: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5z"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M17.8 6.5a7.5 7.5 0 0 1 0 11"/></svg>',
+    quit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v8.5"/><path d="M6.4 6.6a8 8 0 1 0 11.2 0"/></svg>'
+  };
+  function renderPlex(s) {
+    const d = s.plexPage || {};
+    const pill = $('pxPill');
+    const st = !d.ok ? { cls: 'off', txt: d.error === 'config' ? 'JETON PLEX INTROUVABLE' : d.error === 'désactivé' ? 'DÉSACTIVÉ' : d.error ? 'PLEX INJOIGNABLE' : 'CHARGEMENT…' }
+      : d.playing ? { cls: 'run', txt: `${d.playing.state === 'paused' ? 'EN PAUSE' : 'LECTURE'} · ${String(d.playing.title).toUpperCase()}` }
+      : { cls: 'ok', txt: `${(d.onDeck || []).length} À REPRENDRE · ${(d.recent || []).length} NOUVEAUTÉS` };
+    pill.className = 'pill';
+    pill.querySelector('.dot').className = 'dot' + (st.cls === 'run' ? ' pulse' : '');
+    pill.querySelector('.dot').style.background = st.cls === 'run' ? '#E5A00D' : st.cls === 'ok' ? 'var(--up)' : st.cls === 'off' ? 'var(--down)' : 'var(--off)';
+    pill.style.color = st.cls === 'run' ? '#E5A00D' : '';
+    pill.lastElementChild.textContent = st.txt;
+    const chip = $('pxChip');
+    chip.className = 'sw-chip' + (d.ok ? ' on' : '');
+    chip.lastElementChild.textContent = d.ok ? 'lecture sur la barre · transcodage Plex' : (d.error && d.error !== 'config' ? String(d.error) : 'Plex Media Server sur ce Mac');
+    upd('pxDeck', [d.ok, d.error, (d.onDeck || []).map((x) => [x.key, x.viewOffset, x.title])], () => {
+      if (!d.ok) return `<div class="empty">${d.error === 'config' ? 'Plex Media Server doit tourner sur ce Mac (jeton lu dans ses réglages).' : d.error ? 'Plex ne répond pas.' : 'Lecture…'}</div>`;
+      if (!(d.onDeck || []).length) return '<div class="empty">Rien d’entamé.</div>';
+      return d.onDeck.map((x) => {
+        const pct = x.duration ? Math.min(100, x.viewOffset / x.duration * 100) : 0;
+        const left = x.duration ? pxTime(x.duration - x.viewOffset) + ' restantes' : '';
+        return `<button type="button" class="px-card" data-pxplay="${esc(x.key)}" data-pxoffset="${x.viewOffset || 0}">${x.thumb ? `<img src="${pxImg(x.thumb, 152, 228)}" alt="">` : '<span class="ph"></span>'}<div><div class="t">${esc(x.show ? x.title : x.title)}</div><div class="s">${esc(x.show ? pxSub(x) : (x.year || ''))}${left ? ' · ' + esc(left) : ''}</div><div class="bar"><i style="width:${pct.toFixed(1)}%"></i></div></div></button>`;
+      }).join('');
+    });
+    upd('pxRecent', [d.ok, (d.recent || []).map((x) => [x.key, x.title])], () => {
+      if (!d.ok) return '';
+      if (!(d.recent || []).length) return '<div class="empty">Rien de nouveau.</div>';
+      return d.recent.map((x) => `<button type="button" class="px-tile" data-pxplay="${esc(x.key)}" data-pxoffset="${x.viewOffset || 0}">${x.thumb ? `<img src="${pxImg(x.thumb, 300, 450)}" alt="">` : `<span class="ph">${esc(String(x.show || x.title).slice(0, 1))}</span>`}<div class="t">${esc(x.show || x.title)}</div><div class="s">${esc(x.show ? (x.count ? `${x.count} épisodes` : `S${pad(x.season || 0)}E${pad(x.episode || 0)} · ${x.title}`) : (x.year || ''))}</div></button>`).join('');
+    });
+  }
+  // Position absolue dans le film : la liste HLS de Plex porte le décalage (EXT-X-START), currentTime est déjà absolu
+  const pxAbs = () => pxPlay ? pxVideo.currentTime * 1000 : 0;
+  function renderPlayer() {
+    const on = !!pxPlay;
+    document.documentElement.classList.toggle('plexing', on);
+    if (!on) return;
+    const it = pxPlay.item;
+    const abs = pxAbs();
+    const pct = pxPlay.duration ? Math.min(100, abs / pxPlay.duration * 100) : 0;
+    const pend = (state && state.pending) || [];
+    upd('pxL', [it.key, Math.floor(abs / 1000), pxPlay.duration, pxVideo.paused, pxPlay.loading, pend.length], () =>
+      `${it.thumb ? `<img class="px-poster" src="${pxImg(it.thumb, 264, 396)}" alt="">` : ''}`
+      + `<div class="px-title">${esc(it.show ? it.title : it.title)}</div><div class="px-sub">${esc(it.show ? pxSub(it) : (it.year || ''))}</div>`
+      + `<div class="px-time">${pxTime(abs)} / ${pxTime(pxPlay.duration)}</div><div class="px-prog"><i style="width:${pct.toFixed(1)}%"></i></div>`
+      + (pxPlay.loading ? '<div class="px-wait">transcodage…</div>' : pxVideo.paused ? '<div class="px-sub">en pause</div>' : '')
+      + (pend.length ? '<div class="dm-ask">Claude attend une réponse · quitter pour répondre</div>' : '<div class="dm-hint">Touche la vidéo : pause / lecture</div>'));
+    upd('pxR', [pxVideo.paused, Math.round(pxVol * 10), pxPlay.loading], () => {
+      const b = (act, label, icon, cls) => `<button type="button" class="sg-btn ${cls || ''}" data-pxact="${act}">${icon}<span>${label}</span></button>`;
+      return b('toggle', pxVideo.paused ? 'Lecture' : 'Pause', pxVideo.paused ? PX_ICON.play : PX_ICON.pause, 'cyan')
+        + b('back', '−15 s', PX_ICON.back) + b('fwd', '+30 s', PX_ICON.fwd)
+        + b('vol-', `Son −`, PX_ICON.vol) + b('vol+', `Son + · ${Math.round(pxVol * 100)} %`, PX_ICON.vol)
+        + b('stop', 'Quitter', PX_ICON.quit);
+    });
+  }
+  async function pxTimeline(stateName) {
+    if (!pxPlay) return;
+    try { await post('/api/plex/timeline', { key: pxPlay.key, state: stateName, time: Math.floor(pxAbs()), duration: pxPlay.duration, session: pxPlay.session }); } catch { /* Plex le saura au prochain */ }
+  }
+  async function pxStart(key, offsetMs) {
+    if (pxBusy) return;
+    pxBusy = true;
+    try {
+      if (pxPlay && pxPlay.key !== key) await pxTimeline('stopped');
+      // La barre ne montre qu'une chose à la fois : la mosaïque Discord s'efface
+      if (state && state.discord && state.discord.active) await post('/api/discord/stop').catch(() => {});
+      const offset = Math.floor(Math.max(0, offsetMs || 0) / 1000);
+      const r = await post('/api/plex/play', { key, offset });
+      pxPlay = { key, item: r.item, session: r.session, offset, duration: r.item.duration || 0, loading: true };
+      pxVideo.volume = pxVol;
+      pxVideo.src = r.src;
+      renderPlayer();
+      await pxVideo.play().catch(() => {});
+      lastTouch = Date.now();
+    } catch (err) { toast(err.message); if (!pxVideo.src) pxPlay = null; }
+    pxBusy = false;
+    renderPlayer();
+  }
+  async function pxStop() {
+    if (!pxPlay) return;
+    await pxTimeline('stopped');
+    pxPlay = null;
+    pxVideo.pause();
+    pxVideo.removeAttribute('src');
+    pxVideo.load();
+    renderPlayer();
+    post('/api/plex/refresh').catch(() => {});
+  }
+  async function pxAction(act) {
+    if (!pxPlay) return;
+    lastTouch = Date.now();
+    if (act === 'toggle') { if (pxVideo.paused) pxVideo.play().catch(() => {}); else pxVideo.pause(); setTimeout(() => { renderPlayer(); pxTimeline(pxVideo.paused ? 'paused' : 'playing'); }, 150); return; }
+    if (act === 'back' || act === 'fwd') { const abs = Math.max(0, Math.min(pxPlay.duration || 1e12, pxAbs() + (act === 'back' ? -15000 : 30000))); const k = pxPlay.key; await pxTimeline('stopped'); pxPlay = null; return pxStart(k, abs); }
+    if (act === 'vol-' || act === 'vol+') { pxVol = Math.max(0, Math.min(1, pxVol + (act === 'vol-' ? -0.1 : 0.1))); pxVideo.volume = pxVol; renderPlayer(); return; }
+    if (act === 'stop') return pxStop();
+  }
+  pxVideo.addEventListener('playing', () => { if (pxPlay) { pxPlay.loading = false; renderPlayer(); pxTimeline('playing'); } });
+  pxVideo.addEventListener('waiting', () => { if (pxPlay) { pxPlay.loading = true; renderPlayer(); } });
+  pxVideo.addEventListener('ended', () => { pxStop(); });
+  pxVideo.addEventListener('error', () => { if (pxPlay) { toast('Plex : lecture impossible'); pxStop(); } });
+  pxVideo.addEventListener('click', () => pxAction('toggle'));
+  setInterval(() => {
+    if (!pxPlay) return;
+    renderPlayer();
+    if (!pxVideo.paused && Date.now() - pxTl > 10000) { pxTl = Date.now(); pxTimeline('playing'); }
+    if (pxPlay.duration && pxAbs() >= pxPlay.duration - 1500 && pxVideo.ended) pxStop();
+  }, 1000);
+
   function render(s) {
     state = s;
     const pend = s.pending || [];
@@ -2142,6 +2316,8 @@
     renderGame();
     renderDiscord(s);
     renderMosaic();
+    renderPlex(s);
+    if (pxPlay) renderPlayer();
     // Nouvelle demande d'autorisation : on revient à l'accueil pour y répondre.
     const fresh = pend.some((p) => !seenPending.has(p.id));
     seenPending = new Set(pend.map((p) => p.id));
@@ -2189,6 +2365,8 @@
     if ((el = t('[data-dmact]'))) { dmAction(el.dataset.dmact); return; }
     if ((el = t('[data-dcstream]'))) { dcToggleStream(el.dataset.dcstream); return; }
     if ((el = t('[data-dcself]'))) { selfAction(el.dataset.dcself); return; }
+    if ((el = t('[data-pxplay]'))) { pxStart(el.dataset.pxplay, Number(el.dataset.pxoffset) || 0); return; }
+    if ((el = t('[data-pxact]'))) { pxAction(el.dataset.pxact); return; }
     if ((el = t('[data-volclose]'))) { volAction('close', el); return; }
     if ((el = t('[data-volstep]'))) { volAction('step', el); return; }
     if ((el = t('[data-volmute]'))) { volAction('mute', el); return; }

@@ -29,6 +29,8 @@ import { creerHermes } from './lib/hermes.mjs';
 import { creerSwitch } from './lib/switch.mjs';
 import { creerDiscord } from './lib/discord.mjs';
 import { creerDiscordRpc } from './lib/discord-rpc.mjs';
+import { creerPlex } from './lib/plex.mjs';
+import { Readable } from 'node:stream';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 // Le jeton, les règles et les données vivent hors du dossier du code
@@ -231,6 +233,9 @@ const discordRpc = config.discord?.enabled === false ? null : creerDiscordRpc({
   onChange: () => { discordState = dc.etat(); broadcast(); }
 });
 const dc = creerDiscord({ token: config.token, rpc: discordRpc });
+// Page Plex : Reprendre et nouveautés, lecture sur la barre (relais HLS et images vers Plex, jeton côté serveur).
+const px = creerPlex({ cfg: config.plex || {}, log: (m) => console.log('[barre]', m) });
+let plexPage = { ok: false, error: 'chargement', onDeck: [], recent: [] };
 let hermesStatuts = null; // id → statut au passage précédent (pour annoncer les tâches finies)
 const coursService = creerServiceCours({
   fichierCache: COURS_PATH,
@@ -304,7 +309,8 @@ function publicState() {
     patrimoine: patrimoinePublic(),
     hermes: hermesPublic(),
     switch: config.switch?.enabled === false ? { ok: false, error: 'désactivé' } : switchState,
-    discord: config.discord?.enabled === false ? { ok: false, error: 'désactivé' } : discordState
+    discord: config.discord?.enabled === false ? { ok: false, error: 'désactivé' } : discordState,
+    plexPage: config.plex?.enabled === false ? { ok: false, error: 'désactivé' } : px.etat()
   };
 }
 
@@ -788,13 +794,19 @@ async function refreshSwitch() {
   broadcast();
 }
 
+async function refreshPlexPage() {
+  if (config.plex?.enabled === false) return;
+  plexPage = await px.refresh();
+  broadcast();
+}
+
 async function refreshDiscord() {
   if (config.discord?.enabled === false) return;
   try { await dc.refresh(); discordState = dc.etat(); } catch (err) { discordState = { ok: false, error: 'erreur', detail: err.message }; }
   broadcast();
   // Nouveau stream dans le salon → sur la barre, si elle est libre (pas de jeu en cours)
   if (config.discord?.autoStreams !== false) {
-    const gaming = !!(switchState && switchState.eden && switchState.eden.gameMode);
+    const gaming = !!(switchState && switchState.eden && switchState.eden.gameMode) || !!px.playingNow();
     try {
       const x = await dc.autoStreams(!gaming);
       if (x) { pushFeed(`Discord : ${x.name || x.user} est en direct, stream sur la barre`, 'barre'); discordState = dc.etat(); broadcast(); }
@@ -1030,7 +1042,37 @@ const server = http.createServer(async (req, res) => {
   try { url = new URL(req.url, 'http://localhost'); } catch { return json(res, 400, { error: 'adresse invalide' }); }
   const { token, via } = presentedToken(req, url);
 
+  // Vidéo HLS de la page Plex : le lecteur de WebKit n'envoie ni cookie ni jeton aux sous-requêtes ;
+  // l'identifiant de session (aléatoire, créé par /api/plex/play) dans le chemin fait foi.
+  let hls;
+  if (req.method === 'GET' && (hls = url.pathname.match(/^\/api\/plex\/hls\/([0-9a-f-]{36})\/(.+)$/)) && px.sessionOk(hls[1])) {
+    try {
+      const u = await px.proxyUrl(hls[2], url.searchParams);
+      const fwd = { ...px.headers };
+      if (req.headers.range) fwd.range = req.headers.range;
+      const r = await fetch(u, { headers: fwd, signal: AbortSignal.timeout(60000) });
+      const h = { 'cache-control': 'no-store', 'accept-ranges': 'bytes' };
+      const ct = r.headers.get('content-type') || (hls[2].endsWith('.m3u8') ? 'application/vnd.apple.mpegurl' : 'video/MP2T');
+      h['content-type'] = ct;
+      if (process.env.BARRE_PLEX_DEBUG) console.log(`[barre] Plex HLS ${hls[2].slice(0, 70)} → ${r.status} ${ct} ${r.headers.get('content-length') || 'chunked'}${req.headers.range ? ' range ' + req.headers.range : ''} (ua ${String(req.headers['user-agent'] || '').slice(0, 30)})`);
+      if (hls[2].endsWith('.m3u8') || /mpegurl/i.test(ct)) {
+        // Listes de lecture : petites, renvoyées d'un bloc avec leur longueur exacte
+        const txt = Buffer.from(await r.arrayBuffer());
+        h['content-length'] = String(txt.length);
+        res.writeHead(r.status, h);
+        return res.end(txt);
+      }
+      for (const k of ['content-length', 'content-range']) { const v = r.headers.get(k); if (v) h[k] = v; }
+      res.writeHead(r.status, h);
+      if (!r.body) return res.end();
+      return Readable.fromWeb(r.body).pipe(res);
+    } catch (err) {
+      return json(res, 502, { error: err.message });
+    }
+  }
+
   if (!safeEqual(token, config.token)) {
+    if (process.env.BARRE_PLEX_DEBUG) console.log(`[barre] 401 ${req.method} ${req.url.slice(0, 160)}`);
     if (req.method === 'GET' && url.pathname === '/') {
       res.writeHead(401, { 'content-type': 'text/html; charset=utf-8' });
       res.end('<!doctype html><meta charset="utf-8"><body style="background:#0D0E10;color:#ECEAE4;font:24px system-ui;padding:40px">Jeton manquant. Ouvre l’adresse avec <code>?token=…</code> (voir config.json).</body>');
@@ -1237,6 +1279,35 @@ const server = http.createServer(async (req, res) => {
       return json(res, 200, r);
     }
 
+    // Page Plex : relais vers Plex (vidéo HLS, images), lecture, position.
+    if (req.method === 'GET' && p.startsWith('/api/plex/p/')) {
+      if (config.plex?.enabled === false) return json(res, 404, { error: 'Plex désactivé' });
+      const u = await px.proxyUrl(p.slice('/api/plex/p/'.length), url.searchParams);
+      const r = await fetch(u, { headers: { ...px.headers, ...(req.headers.range ? { range: req.headers.range } : {}) }, signal: AbortSignal.timeout(30000) });
+      const h = { 'cache-control': 'no-store' };
+      for (const k of ['content-type', 'content-length', 'content-range', 'accept-ranges']) { const v = r.headers.get(k); if (v) h[k] = v; }
+      res.writeHead(r.status, h);
+      if (!r.body) return res.end();
+      return Readable.fromWeb(r.body).pipe(res);
+    }
+    if (req.method === 'GET' && p === '/api/plex/img') {
+      const u = await px.imageUrl(url.searchParams.get('path') || '', Number(url.searchParams.get('w')) || 300, Number(url.searchParams.get('h')) || 450);
+      const r = await fetch(u, { signal: AbortSignal.timeout(15000) });
+      if (!r.ok) return json(res, 404, { error: 'pas d’image' });
+      res.writeHead(200, { 'content-type': r.headers.get('content-type') || 'image/jpeg', 'cache-control': 'max-age=86400' });
+      return res.end(Buffer.from(await r.arrayBuffer()));
+    }
+    if (req.method === 'POST' && (m = p.match(/^\/api\/plex\/(play|timeline|refresh)$/))) {
+      if (config.plex?.enabled === false) return json(res, 404, { error: 'Plex désactivé' });
+      const body = await readBody(req);
+      let r;
+      if (m[1] === 'play') r = await px.play(String(body.key || ''), Number(body.offset) || 0);
+      else if (m[1] === 'timeline') r = await px.timeline(body);
+      else { await refreshPlexPage(); r = { ok: true }; }
+      if (m[1] !== 'refresh') broadcast(true);
+      return json(res, 200, r);
+    }
+
     // Page Discord : avatars découpés par BarreTouch dans l'image de Discord (data/discord-avatars/<clé>.png)
     if (req.method === 'GET' && (m = p.match(/^\/api\/discord\/avatar\/([A-Za-z0-9_-]{1,120})\.png$/))) {
       const f = path.join(DATA_DIR, 'discord-avatars', m[1] + '.png');
@@ -1352,6 +1423,7 @@ server.listen(config.port, config.host, () => {
   every(3000, () => refreshHermes());
   every(4000, refreshSwitch);
   every(2000, refreshDiscord);
+  every(120000, refreshPlexPage);
   // Jeu qui démarre → sur la barre ; jeu arrêté → tableau de bord (sondage léger de la fenêtre d'Eden)
   if (config.switch?.enabled !== false) every(1500, async () => { if (await sw.watch()) refreshSwitch(); });
 });
